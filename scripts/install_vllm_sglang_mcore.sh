@@ -7,7 +7,7 @@ export MAX_JOBS=32
 
 echo "1. install inference frameworks and pytorch they need"
 if [ $USE_SGLANG -eq 1 ]; then
-    pip install "sglang[all]==0.5.2" --no-cache-dir && pip install torch-memory-saver --no-cache-dir
+    pip install "sglang[all]>=0.5.3" --no-cache-dir && pip install torch-memory-saver --no-cache-dir
 fi
 pip install --no-cache-dir "vllm==0.11.0"
 
