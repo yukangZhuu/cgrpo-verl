@@ -1208,7 +1208,8 @@ class RayPPOTrainer:
             # gather output
             entropy = tu.get(output, "entropy")
             log_probs = tu.get(output, "log_probs")
-            old_log_prob_mfu = tu.get(output, "metrics")["mfu"]
+            metrics = tu.get(output, "metrics")
+            old_log_prob_mfu = metrics.get("mfu", 0.0)
             # step 4. No padding to padding
             entropy = no_padding_2_padding(entropy, batch_td)
             log_probs = no_padding_2_padding(log_probs, batch_td)
