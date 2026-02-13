@@ -74,10 +74,14 @@ class CurriculumTaskRunner:
         """
         from pprint import pprint
         from verl.utils.fs import copy_to_local
+        from omegaconf import open_dict
         
         print(f"CurriculumTaskRunner hostname: {socket.gethostname()}, PID: {os.getpid()}")
         pprint(OmegaConf.to_container(config, resolve=True))
         OmegaConf.resolve(config)
+        
+        with open_dict(config):
+            config.trainer.use_legacy_worker_impl = "disable"
         
         self._setup_workers(config)
         
