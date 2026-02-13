@@ -44,10 +44,14 @@ class CurriculumAgentLoop(AgentLoopBase):
         self.prompt_length = self.config.actor_rollout_ref.rollout.prompt_length
         self.response_length = self.config.actor_rollout_ref.rollout.response_length
         
-        self.thinking_start = self.config.data.get("thinking_start", "<think>")
-        self.thinking_end = self.config.data.get("thinking_end", "</think>")
+        self.thinking_start = self.config.data.get("thinking_start", "hardt")
+        self.thinking_end = self.config.data.get("thinking_end", "hardt")
         self.answer_start = self.config.data.get("answer_start", "<answer>")
         self.answer_end = self.config.data.get("answer_end", "</answer>")
+        self.instruction_following = self.config.data.get(
+            "instruction_following",
+            'Let\'s think step by step and output the final answer after "####".',
+        )
         
         self.current_k = self.config.curriculum.get("initial_k", 1)
         
@@ -66,7 +70,8 @@ class CurriculumAgentLoop(AgentLoopBase):
             sampling_params: Sampling parameters.
             **kwargs: Additional arguments including:
                 - raw_prompt: Original question
-                - steps: Teacher's reasoning steps
+                - steps: Teacher's reasoning steps (optional, used if teacher_prefix not provided)
+                - teacher_prefix: Pre-computed teacher prefix (optional)
                 - current_k: Current curriculum level (optional, overrides self.current_k)
         
         Returns:
@@ -74,13 +79,22 @@ class CurriculumAgentLoop(AgentLoopBase):
         """
         messages = list(kwargs["raw_prompt"])
         steps = kwargs.get("steps", [])
+        teacher_prefix = kwargs.get("teacher_prefix", "")
         current_k = kwargs.get("current_k", self.current_k)
         
-        prompt_ids = await self._build_curriculum_prompt(
-            messages=messages,
-            steps=steps,
-            current_k=current_k,
-        )
+        if teacher_prefix:
+            prompt_ids = await self._build_curriculum_prompt_with_prefix(
+                messages=messages,
+                teacher_prefix=teacher_prefix,
+            )
+        elif steps:
+            prompt_ids = await self._build_curriculum_prompt(
+                messages=messages,
+                steps=steps,
+                current_k=current_k,
+            )
+        else:
+            prompt_ids = await self.apply_chat_template(messages)
         
         metrics = {}
         with simple_timer("generate_sequences", metrics):
@@ -113,6 +127,69 @@ class CurriculumAgentLoop(AgentLoopBase):
         )
         return output
     
+    async def _build_curriculum_prompt_with_prefix(
+        self,
+        messages: list[dict],
+        teacher_prefix: str,
+    ) -> list[int]:
+        """
+        Build curriculum-aware prompt with pre-computed teacher prefix.
+        
+        Args:
+            messages: Original messages (user question).
+            teacher_prefix: Pre-computed teacher prefix.
+        
+        Returns:
+            Token IDs for the constructed prompt.
+        """
+        messages = self._add_instruction_following(messages)
+        
+        if not teacher_prefix:
+            return await self.apply_chat_template(messages)
+        
+        assistant_prefix = f"{self.thinking_start}\n{teacher_prefix}"
+        
+        prompt_text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+        prompt_text += assistant_prefix
+        
+        prompt_ids = self.tokenizer.encode(prompt_text, add_special_tokens=False)
+        
+        if len(prompt_ids) > self.prompt_length:
+            prompt_ids = prompt_ids[-self.prompt_length:]
+            logger.warning(f"Prompt truncated to {self.prompt_length} tokens")
+        
+        return prompt_ids
+    
+    def _add_instruction_following(self, messages: list[dict]) -> list[dict]:
+        """
+        Add instruction following to user message if not present.
+        
+        Args:
+            messages: Original messages.
+        
+        Returns:
+            Messages with instruction following added.
+        """
+        if not self.instruction_following:
+            return messages
+        
+        messages = list(messages)
+        for i, msg in enumerate(messages):
+            if msg.get("role") == "user":
+                content = msg.get("content", "")
+                if self.instruction_following and not content.rstrip().endswith(self.instruction_following):
+                    messages[i] = {
+                        "role": "user",
+                        "content": content.rstrip() + " " + self.instruction_following,
+                    }
+                break
+        
+        return messages
+    
     async def _build_curriculum_prompt(
         self,
         messages: list[dict],
@@ -130,6 +207,8 @@ class CurriculumAgentLoop(AgentLoopBase):
         Returns:
             Token IDs for the constructed prompt.
         """
+        messages = self._add_instruction_following(messages)
+        
         if not steps:
             prompt_ids = await self.apply_chat_template(messages)
             return prompt_ids

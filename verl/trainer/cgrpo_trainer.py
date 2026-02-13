@@ -128,7 +128,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         """
         batch_size = len(batch)
         
-        curriculum_prompts = []
         teacher_prefixes = []
         cut_indices = []
         
@@ -155,66 +154,13 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 cut_index = 0
                 teacher_prefix = ""
             
-            curriculum_prompt = self._build_curriculum_prompt_text(
-                question=question,
-                teacher_prefix=teacher_prefix,
-            )
-            
-            curriculum_prompts.append(curriculum_prompt)
             teacher_prefixes.append(teacher_prefix)
             cut_indices.append(cut_index)
-        
-        prompt_ids = self.tokenizer(
-            curriculum_prompts,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=self.config.data.max_prompt_length,
-            add_special_tokens=False,
-        )["input_ids"]
-        
-        batch.batch["prompts"] = prompt_ids
         
         batch.non_tensor_batch["teacher_prefix"] = np.array(teacher_prefixes, dtype=object)
         batch.non_tensor_batch["cut_index"] = np.array(cut_indices, dtype=np.int32)
         
         return batch
-    
-    def _build_curriculum_prompt_text(
-        self,
-        question: str,
-        teacher_prefix: str,
-    ) -> str:
-        """
-        Build curriculum prompt text.
-        
-        Args:
-            question: User question.
-            teacher_prefix: Teacher's reasoning prefix.
-        
-        Returns:
-            Formatted prompt string.
-        """
-        thinking_start = self.config.data.get("thinking_start", "<think>")
-        instruction_following = self.config.data.get(
-            "instruction_following",
-            'Let\'s think step by step and output the final answer after "####".',
-        )
-        
-        if instruction_following and not question.rstrip().endswith(instruction_following):
-            question = question.rstrip() + " " + instruction_following
-        
-        messages = [{"role": "user", "content": question}]
-        prompt = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        
-        if teacher_prefix:
-            prompt += f"{thinking_start}\n{teacher_prefix}"
-        
-        return prompt
     
     def fit(self):
         """

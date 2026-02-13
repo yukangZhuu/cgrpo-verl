@@ -84,6 +84,10 @@ actor_rollout_ref:
     prompt_length: 1024
     response_length: 1024
 
+    agent:
+      num_workers: 1
+      default_agent_loop: curriculum_agent
+
   ref:
     log_prob_micro_batch_size_per_gpu: 16
     fsdp_config:
