@@ -1,12 +1,5 @@
 # C-GRPO: Curriculum Group Relative Policy Optimization
 
-<div align="center">
-
-[![GitHub Repo stars](https://img.shields.io/github/stars/volcengine/verl)](https://github.com/volcengine/verl/stargazers)
-[![Documentation](https://img.shields.io/badge/documentation-blue)](https://verl.readthedocs.io/en/latest/)
-
-</div>
-
 ## 项目简介
 
 本项目是 **Curriculum-GRPO (C-GRPO)** 的实现，基于 [verl](https://github.com/volcengine/verl) 框架开发。verl 是由 ByteDance Seed 团队发起并维护的 LLM 强化学习训练库。
@@ -217,33 +210,8 @@ actor_rollout_ref:
 
 ---
 
-## 引用
-
-如果您使用本项目的 C-GRPO 实现，请引用：
-
-```bibtex
-@article{cgrpo2024,
-  title={Curriculum-GRPO: Backward Chaining for Small Language Model Training},
-  year={2024}
-}
-
-@article{verl2024,
-  title={HybridFlow: A Flexible and Efficient RLHF Framework},
-  author={verl Team},
-  journal={EuroSys 2025},
-  year={2024}
-}
-```
-
----
-
 ## 许可证
 
 本项目继承 verl 原项目的 Apache 2.0 许可证。详见 [LICENSE](./LICENSE)。
 
 ---
-
-## 致谢
-
-- 感谢 [verl](https://github.com/volcengine/verl) 团队提供优秀的 RL 训练框架
-- 感谢 ByteDance Seed 团队的开源贡献
