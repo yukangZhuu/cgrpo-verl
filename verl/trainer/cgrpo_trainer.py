@@ -25,6 +25,7 @@ import torch
 from omegaconf import OmegaConf, open_dict
 from torch.utils.data import Dataset, Sampler
 from tqdm import tqdm
+import uuid
 
 from verl import DataProto
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer, compute_advantage
