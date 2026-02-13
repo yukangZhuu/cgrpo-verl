@@ -31,11 +31,14 @@ class CurriculumConfig:
     initial_k: int = 1
     max_k: int = 10
     ema_alpha: float = 0.2
-    base_threshold: float = 0.9
-    threshold_decay: float = 0.92
+    base_threshold: float = 0.92
+    threshold_decay: float = 0.95
     patience: int = 1000
     min_steps_per_k: int = 100
     warmup_steps: int = 0
+    early_stop_enabled: bool = True
+    early_stop_threshold: float = 0.85
+    early_stop_min_steps: int = 200
 
 
 class CurriculumManager:
@@ -66,6 +69,8 @@ class CurriculumManager:
         self.total_steps = 0
         self.steps_at_current_k = 0
         self.history = []
+        self._should_stop = False
+        self._steps_at_max_k = 0
         
         logger.info(f"CurriculumManager initialized with k={self.k}, max_k={self.config.max_k}")
     
@@ -107,6 +112,11 @@ class CurriculumManager:
             self._advance_curriculum()
             advanced = True
         
+        if self.is_completed():
+            self._steps_at_max_k += 1
+            if self._check_early_stop():
+                self._should_stop = True
+        
         metrics = {
             "curriculum/k": self.k,
             "curriculum/sr_ema": self.sr_ema,
@@ -115,6 +125,8 @@ class CurriculumManager:
             "curriculum/advanced": float(advanced),
             "curriculum/total_steps": self.total_steps,
             "curriculum/steps_at_current_k": self.steps_at_current_k,
+            "curriculum/steps_at_max_k": self._steps_at_max_k,
+            "curriculum/should_stop": float(self._should_stop),
         }
         
         self.history.append({
@@ -168,6 +180,46 @@ class CurriculumManager:
         self.steps_at_current_k = 0
         logger.info(f"Curriculum advanced to k={self.k}")
     
+    def _check_early_stop(self) -> bool:
+        """
+        Check if training should stop early.
+        
+        Early stopping conditions:
+        1. k has reached max_k
+        2. Success rate EMA exceeds early_stop_threshold
+        3. Minimum steps at max_k have been completed
+        
+        Returns:
+            True if should stop, False otherwise.
+        """
+        if not self.config.early_stop_enabled:
+            return False
+        
+        if not self.is_completed():
+            return False
+        
+        if self._steps_at_max_k < self.config.early_stop_min_steps:
+            return False
+        
+        if self.sr_ema >= self.config.early_stop_threshold:
+            logger.info(
+                f"Early stopping triggered: k={self.k} (max_k), "
+                f"sr_ema={self.sr_ema:.4f} >= threshold={self.config.early_stop_threshold:.4f}, "
+                f"steps_at_max_k={self._steps_at_max_k}"
+            )
+            return True
+        
+        return False
+    
+    def should_stop(self) -> bool:
+        """
+        Check if training should stop.
+        
+        Returns:
+            True if training should stop.
+        """
+        return self._should_stop
+    
     def get_current_k(self) -> int:
         """Get current curriculum level."""
         return self.k
@@ -196,6 +248,8 @@ class CurriculumManager:
             "total_steps": self.total_steps,
             "steps_at_current_k": self.steps_at_current_k,
             "history": self.history,
+            "_should_stop": self._should_stop,
+            "_steps_at_max_k": self._steps_at_max_k,
             "config": {
                 "initial_k": self.config.initial_k,
                 "max_k": self.config.max_k,
@@ -205,6 +259,9 @@ class CurriculumManager:
                 "patience": self.config.patience,
                 "min_steps_per_k": self.config.min_steps_per_k,
                 "warmup_steps": self.config.warmup_steps,
+                "early_stop_enabled": self.config.early_stop_enabled,
+                "early_stop_threshold": self.config.early_stop_threshold,
+                "early_stop_min_steps": self.config.early_stop_min_steps,
             }
         }
     
@@ -216,6 +273,8 @@ class CurriculumManager:
         self.total_steps = state_dict["total_steps"]
         self.steps_at_current_k = state_dict["steps_at_current_k"]
         self.history = state_dict.get("history", [])
+        self._should_stop = state_dict.get("_should_stop", False)
+        self._steps_at_max_k = state_dict.get("_steps_at_max_k", 0)
         
         if "config" in state_dict:
             config_dict = state_dict["config"]

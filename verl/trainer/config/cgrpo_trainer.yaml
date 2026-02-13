@@ -15,6 +15,11 @@ curriculum:
   patience: 1000                  # Steps to wait before forcing advancement
   min_steps_per_k: 100            # Minimum steps at each k before advancement
   warmup_steps: 0                 # Warmup steps before curriculum starts
+  
+  # Early stopping configuration
+  early_stop_enabled: true        # Enable early stopping when curriculum completes
+  early_stop_threshold: 0.85      # Success rate threshold for early stopping at max_k
+  early_stop_min_steps: 200       # Minimum steps at max_k before early stopping
 
 # Data Configuration
 data:

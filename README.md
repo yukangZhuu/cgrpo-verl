@@ -61,6 +61,16 @@ Curriculum Manager 维护当前难度级别 `k`，并根据成功率动态调整
 2. **动态阈值**: `threshold = 0.9 × (0.95)^(k-1)`，难度越高阈值越低
 3. **Patience 机制**: 超过 patience 步数强制进阶，防止卡住
 
+### 早停机制
+
+当满足以下条件时，训练将自动停止：
+
+1. **k 已达到 max_k**: Student 需要生成完整解答
+2. **成功率达标**: `sr_ema >= early_stop_threshold` (默认 0.85)
+3. **最小步数**: 在 max_k 级别至少训练 `early_stop_min_steps` 步 (默认 200)
+
+这确保了当 Student Model 已经能够独立解决问题时，不会继续不必要的训练。
+
 ### 与标准 GRPO 的对比
 
 | 特性     | GRPO           | C-GRPO                |
@@ -154,6 +164,11 @@ curriculum:
   threshold_decay: 0.95 # 每个 k 级别阈值衰减
   patience: 1000 # 耐心值
 
+  # 早停设置
+  early_stop_enabled: true # 启用早停
+  early_stop_threshold: 0.85 # 早停成功率阈值
+  early_stop_min_steps: 200 # max_k 级别最小训练步数
+
 # GRPO 设置
 algorithm:
   adv_estimator: grpo
@@ -174,13 +189,15 @@ actor_rollout_ref:
 
 训练过程中会记录以下关键指标到 wandb：
 
-| 指标名称                         | 说明           |
-| -------------------------------- | -------------- |
-| `curriculum/k`                   | 当前课程级别   |
-| `curriculum/sr_ema`              | EMA 成功率     |
-| `curriculum/threshold`           | 当前进阶阈值   |
-| `curriculum/advanced`            | 是否进阶       |
-| `curriculum/progress_percentage` | 总体进度百分比 |
+| 指标名称                         | 说明                    |
+| -------------------------------- | ----------------------- |
+| `curriculum/k`                   | 当前课程级别            |
+| `curriculum/sr_ema`              | EMA 成功率              |
+| `curriculum/threshold`           | 当前进阶阈值            |
+| `curriculum/advanced`            | 是否进阶                |
+| `curriculum/progress_percentage` | 总体进度百分比          |
+| `curriculum/steps_at_max_k`      | 在 max_k 级别训练的步数 |
+| `curriculum/should_stop`         | 是否触发早停            |
 
 ---
 

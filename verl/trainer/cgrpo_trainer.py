@@ -333,6 +333,16 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 if self.global_steps % self.config.trainer.test_freq == 0:
                     val_metrics = self._validate()
                     logger.log(data=val_metrics, step=self.global_steps)
+                
+                if self.curriculum_manager.should_stop():
+                    logger.info(
+                        f"Early stopping triggered at step {self.global_steps}, "
+                        f"k={self.curriculum_manager.get_current_k()}, "
+                        f"sr_ema={self.curriculum_manager.sr_ema:.4f}"
+                    )
+                    self._save_checkpoint()
+                    progress_bar.close()
+                    return
         
         progress_bar.close()
     

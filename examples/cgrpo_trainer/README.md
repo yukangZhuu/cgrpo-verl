@@ -191,10 +191,10 @@ Key configuration parameters:
 ```yaml
 # Curriculum settings
 curriculum:
-  initial_k: 1              # Start with last step
-  max_k: 10                 # Generate all steps eventually
-  base_threshold: 0.9       # 90% success rate to advance
-  threshold_decay: 0.95     # Lower threshold for higher k
+  initial_k: 1 # Start with last step
+  max_k: 10 # Generate all steps eventually
+  base_threshold: 0.9 # 90% success rate to advance
+  threshold_decay: 0.95 # Lower threshold for higher k
 
 # GRPO settings
 algorithm:
@@ -204,10 +204,10 @@ algorithm:
 # Actor settings
 actor_rollout_ref:
   actor:
-    use_kl_loss: true       # KL in loss (not reward)
+    use_kl_loss: true # KL in loss (not reward)
     kl_loss_coef: 0.001
   rollout:
-    n: 5                    # 5 responses per prompt
+    n: 5 # 5 responses per prompt
 ```
 
 ## Curriculum Advancement Logic
@@ -216,7 +216,6 @@ The curriculum advances when:
 
 1. **Success Rate Threshold**: `sr_ema > threshold`
    - Threshold decreases with k: `threshold = 0.9 * (0.95 ** (k-1))`
-   
 2. **Patience Exhausted**: No advancement for `patience` steps
 
 3. **Minimum Steps**: At least `min_steps_per_k` steps at current k
@@ -231,6 +230,25 @@ k=3: threshold=0.812, need 81.2% success rate
 k=10: threshold=0.57, need 57% success rate
 ```
 
+## Early Stopping
+
+Training automatically stops when all conditions are met:
+
+1. **k reached max_k**: Student generates complete solutions
+2. **Success rate achieved**: `sr_ema >= early_stop_threshold` (default 0.85)
+3. **Minimum steps at max_k**: At least `early_stop_min_steps` steps (default 200)
+
+This ensures training stops when the student model can solve problems independently.
+
+Configuration:
+
+```yaml
+curriculum:
+  early_stop_enabled: true
+  early_stop_threshold: 0.85
+  early_stop_min_steps: 200
+```
+
 ## Monitoring
 
 Key metrics logged to wandb:
@@ -239,7 +257,9 @@ Key metrics logged to wandb:
 - `curriculum/sr_ema`: EMA success rate
 - `curriculum/threshold`: Current advancement threshold
 - `curriculum/advanced`: Whether curriculum advanced this step
-- `curriculum/progress_percentage`: Overall progress (k/max_k * 100)
+- `curriculum/progress_percentage`: Overall progress (k/max_k \* 100)
+- `curriculum/steps_at_max_k`: Steps trained at max_k level
+- `curriculum/should_stop`: Whether early stopping is triggered
 
 ## Checkpointing
 
@@ -257,13 +277,13 @@ Curriculum state is saved with model checkpoints:
 
 ## Comparison with Standard GRPO
 
-| Feature | GRPO | C-GRPO |
-|---------|------|--------|
-| Prompt | Question only | Question + Teacher prefix |
-| Generation | Full solution | Last k steps |
-| Difficulty | Fixed | Progressive |
-| Baseline | Group mean | Group mean |
-| Training signal | Final answer | Final answer |
+| Feature         | GRPO          | C-GRPO                    |
+| --------------- | ------------- | ------------------------- |
+| Prompt          | Question only | Question + Teacher prefix |
+| Generation      | Full solution | Last k steps              |
+| Difficulty      | Fixed         | Progressive               |
+| Baseline        | Group mean    | Group mean                |
+| Training signal | Final answer  | Final answer              |
 
 ## Advantages
 
