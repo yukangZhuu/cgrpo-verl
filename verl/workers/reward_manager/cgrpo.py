@@ -158,7 +158,8 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         for i, reward in enumerate(rewards):
             response_mask = self._get_response_end_mask(
                 responses[i],
-                attention_mask[i] if attention_mask is not None else None
+                attention_mask[i] if attention_mask is not None else None,
+                response_length,
             )
             last_valid_idx = response_mask.sum().item() - 1
             if last_valid_idx >= 0:
@@ -324,19 +325,26 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         self,
         response: torch.Tensor,
         attention_mask: Optional[torch.Tensor] = None,
+        response_length: int = None,
     ) -> torch.Tensor:
         """
         Get mask for valid response tokens.
         
         Args:
             response: Response tokens.
-            attention_mask: Attention mask.
+            attention_mask: Attention mask (full sequence).
+            response_length: Length of response portion.
         
         Returns:
-            Boolean mask tensor.
+            Boolean mask tensor for response portion only.
         """
         if attention_mask is not None:
-            return (attention_mask == 1).bool()
+            if response_length is not None and len(attention_mask) > response_length:
+                prompt_len = len(attention_mask) - response_length
+                response_mask = attention_mask[prompt_len:]
+            else:
+                response_mask = attention_mask[-len(response):]
+            return (response_mask == 1).bool()
         else:
             return (response != 0).bool()
     
