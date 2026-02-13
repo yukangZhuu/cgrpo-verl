@@ -273,7 +273,8 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 actor_output = self._update_actor(batch)
                 self.checkpoint_manager.update_weights()
                 
-                batch_success_rate = reward_tensor.sum(dim=-1).mean().item() / self.config.actor_rollout_ref.rollout.n
+                rewards_per_sample = reward_tensor.sum(dim=-1)
+                batch_success_rate = rewards_per_sample.mean().item()
                 curriculum_metrics = self.curriculum_manager.update(
                     batch_success_rate=batch_success_rate,
                     batch_size=len(batch),
