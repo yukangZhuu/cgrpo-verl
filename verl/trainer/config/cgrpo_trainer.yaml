@@ -112,3 +112,8 @@ trainer:
   project_name: "verl_cgrpo_gsm8k"
   experiment_name: "qwen3_0.6b_curriculum_grpo"
   default_local_dir: "./checkpoints/cgrpo"
+
+  # Debug options
+  debug_dump_samples: false # Set to true to enable sample dumping
+  debug_dump_dir: "./debug_samples" # Directory to save debug samples
+  debug_num_samples: 5 # Number of samples to dump per step

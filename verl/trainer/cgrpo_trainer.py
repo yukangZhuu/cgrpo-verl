@@ -16,6 +16,7 @@ Curriculum-GRPO Trainer.
 Extends RayPPOTrainer with curriculum learning support.
 """
 
+import json
 import logging
 import os
 from typing import Optional
@@ -243,6 +244,15 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 batch.batch["token_level_scores"] = reward_tensor
                 batch.batch["token_level_rewards"] = reward_tensor
                 
+                if self.config.trainer.get("debug_dump_samples", False):
+                    self._dump_debug_samples(
+                        batch=batch,
+                        reward_tensor=reward_tensor,
+                        reward_extra_info=reward_extra_info,
+                        current_k=current_k,
+                        num_samples=self.config.trainer.get("debug_num_samples", 5),
+                    )
+                
                 old_log_prob, old_log_prob_mfu = self._compute_old_log_prob(batch)
                 batch = batch.union(old_log_prob)
                 
@@ -320,6 +330,79 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         else:
             from verl.trainer.ppo.reward import compute_reward
             return compute_reward(batch, self.reward_fn)
+    
+    def _dump_debug_samples(
+        self,
+        batch: DataProto,
+        reward_tensor: torch.Tensor,
+        reward_extra_info: dict,
+        current_k: int,
+        num_samples: int = 5,
+    ):
+        """
+        Dump debug samples to a JSONL file for analysis.
+        
+        Args:
+            batch: Batch data.
+            reward_tensor: Computed rewards.
+            reward_extra_info: Extra info from reward computation.
+            current_k: Current curriculum level.
+            num_samples: Number of samples to dump.
+        """
+        dump_dir = self.config.trainer.get("debug_dump_dir", "./debug_samples")
+        os.makedirs(dump_dir, exist_ok=True)
+        
+        filename = os.path.join(dump_dir, f"step_{self.global_steps}_k{current_k}.jsonl")
+        
+        prompts = batch.batch["prompts"]
+        responses = batch.batch["responses"]
+        attention_mask = batch.batch["attention_mask"]
+        
+        prompt_length = prompts.shape[1]
+        response_length = responses.shape[1]
+        
+        n_samples = min(num_samples, len(batch))
+        
+        samples = []
+        for i in range(n_samples):
+            prompt_ids = prompts[i]
+            response_ids = responses[i]
+            
+            prompt_text = self.tokenizer.decode(prompt_ids[prompt_ids != 0], skip_special_tokens=False)
+            response_text = self.tokenizer.decode(response_ids[attention_mask[i, prompt_length:] == 1], skip_special_tokens=False)
+            
+            item = batch[i]
+            teacher_prefix = item.non_tensor_batch.get("teacher_prefix", "")
+            ground_truth = item.non_tensor_batch.get("reward_model", {}).get("ground_truth", "")
+            cut_index = item.non_tensor_batch.get("cut_index", 0)
+            
+            extracted_answer = reward_extra_info.get("extracted_answers", [""] * n_samples)[i] if reward_extra_info else ""
+            is_correct = reward_extra_info.get("is_correct", [False] * n_samples)[i] if reward_extra_info else False
+            
+            reward_sum = reward_tensor[i].sum().item()
+            
+            sample = {
+                "step": self.global_steps,
+                "k": current_k,
+                "index": i,
+                "cut_index": cut_index,
+                "teacher_prefix": teacher_prefix[:500] + "..." if len(str(teacher_prefix)) > 500 else teacher_prefix,
+                "ground_truth": str(ground_truth),
+                "prompt_text": prompt_text,
+                "response_text": response_text,
+                "extracted_answer": extracted_answer,
+                "is_correct": is_correct,
+                "reward": reward_sum,
+            }
+            samples.append(sample)
+        
+        with open(filename, "w", encoding="utf-8") as f:
+            for sample in samples:
+                f.write(json.dumps(sample, ensure_ascii=False) + "\n")
+        
+        logger.info(f"Dumped {n_samples} debug samples to {filename}")
+        
+        return samples
     
     def _save_checkpoint(self):
         """Save checkpoint including curriculum state."""
