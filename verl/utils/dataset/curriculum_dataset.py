@@ -77,8 +77,8 @@ class CurriculumGRPODataset(Dataset):
         self.max_response_length = config.get("max_response_length", 1024)
         self.filter_overlong_prompts = config.get("filter_overlong_prompts", True)
         
-        self.thinking_start = config.get("thinking_start", "<think")
-        self.thinking_end = config.get("thinking_end", "</think")
+        self.thinking_start = config.get("thinking_start", "<think>")
+        self.thinking_end = config.get("thinking_end", "</think>")
         self.answer_start = config.get("answer_start", "<answer>")
         self.answer_end = config.get("answer_end", "</answer>")
         
@@ -282,42 +282,6 @@ class CurriculumGRPODataset(Dataset):
             )
         else:
             return f"<|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant\n"
-    
-    def get_target_response(
-        self,
-        item: dict,
-        current_k: int,
-    ) -> str:
-        """
-        Get target response for a given curriculum level.
-        
-        Args:
-            item: Data item.
-            current_k: Current curriculum level.
-        
-        Returns:
-            Target response string (steps student should generate + answer).
-        """
-        steps = item.get("steps", [])
-        teacher_answer = item.get("teacher_answer", "")
-        
-        num_steps = len(steps)
-        cut_index = max(0, num_steps - current_k)
-        
-        student_target_steps = steps[cut_index:]
-        
-        response_parts = []
-        
-        if student_target_steps:
-            response_parts.append(self.thinking_start)
-            for step in student_target_steps:
-                response_parts.append(step)
-            response_parts.append(self.thinking_end)
-        
-        response_parts.append(f"{self.answer_start}{teacher_answer}{self.answer_end}")
-        
-        return "\n".join(response_parts)
-
 
 def create_curriculum_collate_fn(
     tokenizer: PreTrainedTokenizer,

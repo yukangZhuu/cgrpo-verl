@@ -47,8 +47,8 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         correct_score: float = 1.0,
         answer_start: str = "<answer>",
         answer_end: str = "</answer>",
-        thinking_start: str = "<think",
-        thinking_end: str = "</think",
+        thinking_start: str = "<think>",
+        thinking_end: str = "</think>",
         strict_format: bool = False,
         **kwargs,
     ):

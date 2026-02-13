@@ -7,19 +7,19 @@ defaults:
 
 # Curriculum Learning Configuration
 curriculum:
-  initial_k: 1                    # Start with generating only the last step
-  max_k: 10                       # Maximum number of steps to generate
-  ema_alpha: 0.1                  # EMA smoothing factor for success rate
-  base_threshold: 0.9             # Base success rate threshold for advancement
-  threshold_decay: 0.95           # Threshold decay per k level
-  patience: 1000                  # Steps to wait before forcing advancement
-  min_steps_per_k: 100            # Minimum steps at each k before advancement
-  warmup_steps: 0                 # Warmup steps before curriculum starts
-  
+  initial_k: 1 # Start with generating only the last step
+  max_k: 10 # Maximum number of steps to generate
+  ema_alpha: 0.1 # EMA smoothing factor for success rate
+  base_threshold: 0.9 # Base success rate threshold for advancement
+  threshold_decay: 0.95 # Threshold decay per k level
+  patience: 1000 # Steps to wait before forcing advancement
+  min_steps_per_k: 100 # Minimum steps at each k before advancement
+  warmup_steps: 0 # Warmup steps before curriculum starts
+
   # Early stopping configuration
-  early_stop_enabled: true        # Enable early stopping when curriculum completes
-  early_stop_threshold: 0.85      # Success rate threshold for early stopping at max_k
-  early_stop_min_steps: 200       # Minimum steps at max_k before early stopping
+  early_stop_enabled: true # Enable early stopping when curriculum completes
+  early_stop_threshold: 0.85 # Success rate threshold for early stopping at max_k
+  early_stop_min_steps: 200 # Minimum steps at max_k before early stopping
 
 # Data Configuration
 data:
@@ -28,13 +28,13 @@ data:
   train_batch_size: 512
   max_prompt_length: 1024
   max_response_length: 1024
-  
+
   # Thinking/Answer format tags
-  thinking_start: "<think"
-  thinking_end: "</think"
+  thinking_start: "<think>"
+  thinking_end: "</think>"
   answer_start: "<answer>"
   answer_end: "</answer>"
-  
+
   # Dataset settings
   use_chat_template: true
   filter_overlong_prompts: true
@@ -42,48 +42,48 @@ data:
 
 # Algorithm Configuration
 algorithm:
-  adv_estimator: grpo             # Use GRPO advantage estimator
+  adv_estimator: grpo # Use GRPO advantage estimator
   gamma: 1.0
   lam: 1.0
-  use_kl_in_reward: false         # GRPO uses KL in loss, not reward
-  norm_adv_by_std_in_grpo: true   # Normalize advantages by std
+  use_kl_in_reward: false # GRPO uses KL in loss, not reward
+  norm_adv_by_std_in_grpo: true # Normalize advantages by std
 
 # Actor-Rollout-Reference Configuration
 actor_rollout_ref:
   model:
-    path: Qwen/Qwen3-0.6B         # Student model
+    path: Qwen/Qwen3-0.6B # Student model
     use_remove_padding: true
     enable_gradient_checkpointing: true
-  
+
   actor:
     strategy: fsdp
     optim:
       lr: 1e-6
     ppo_mini_batch_size: 128
     ppo_micro_batch_size_per_gpu: 16
-    use_kl_loss: true             # GRPO uses KL loss
+    use_kl_loss: true # GRPO uses KL loss
     kl_loss_coef: 0.001
     kl_loss_type: low_var_kl
     entropy_coeff: 0
     loss_agg_mode: token-mean
-    
+
     fsdp_config:
       param_offload: false
       optimizer_offload: false
-  
+
   rollout:
     name: vllm
     mode: async
     temperature: 0.7
     top_p: 0.9
     top_k: 50
-    n: 5                          # Number of responses per prompt (GRPO)
+    n: 5 # Number of responses per prompt (GRPO)
     log_prob_micro_batch_size_per_gpu: 16
     tensor_model_parallel_size: 1
     gpu_memory_utilization: 0.6
     prompt_length: 1024
     response_length: 1024
-  
+
   ref:
     log_prob_micro_batch_size_per_gpu: 16
     fsdp_config:
@@ -91,10 +91,10 @@ actor_rollout_ref:
 
 # Reward Model Configuration
 reward_model:
-  enable: false                   # Using function reward, not neural RM
-  num_examine: 5                  # Number of samples to log for debugging
-  format_score: 0.0               # Score for correct format but wrong answer
-  correct_score: 1.0              # Score for correct answer
+  enable: false # Using function reward, not neural RM
+  num_examine: 5 # Number of samples to log for debugging
+  format_score: 0.0 # Score for correct format but wrong answer
+  correct_score: 1.0 # Score for correct answer
 
 # Trainer Configuration
 trainer:

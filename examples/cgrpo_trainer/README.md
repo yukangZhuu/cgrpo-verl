@@ -145,10 +145,10 @@ For curriculum level k, the prompt is constructed as:
 ```
 User: Janet's ducks lay 16 eggs per day...
 
-Assistant: <think
+Assistant: <think>
 [Teacher's first L-k steps]
 [Student generates remaining k steps]
-</think
+</think>
 <answer>18</answer>
 ```
 
@@ -157,12 +157,12 @@ Example for k=2 (4 total steps):
 ```
 User: Janet's ducks lay 16 eggs per day...
 
-Assistant: <think
+Assistant: <think>
 Janet's ducks lay 16 eggs per day.
 She uses 3 eggs for breakfast and 4 for muffins, total 7 eggs.
 [Student generates: Remaining eggs: 16 - 7 = 9 eggs.]
 [Student generates: Daily earnings: 9 × $2 = $18.]
-</think
+</think>
 <answer>18</answer>
 ```
 

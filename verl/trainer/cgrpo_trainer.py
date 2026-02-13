@@ -195,7 +195,14 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         Returns:
             Formatted prompt string.
         """
-        thinking_start = self.config.data.get("thinking_start", "<think")
+        thinking_start = self.config.data.get("thinking_start", "<think>")
+        instruction_following = self.config.data.get(
+            "instruction_following",
+            'Let\'s think step by step and output the final answer after "####".',
+        )
+        
+        if instruction_following and not question.rstrip().endswith(instruction_following):
+            question = question.rstrip() + " " + instruction_following
         
         messages = [{"role": "user", "content": question}]
         prompt = self.tokenizer.apply_chat_template(
