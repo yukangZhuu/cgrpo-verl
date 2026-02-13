@@ -121,7 +121,6 @@ class CurriculumTaskRunner:
         
         from verl.single_controller.ray import RayWorkerGroup, ResourcePoolManager
         from verl.single_controller.ray.base import create_colocated_worker_cls
-        from verl.single_controller.ray import RayClassWithInitArgs
         from verl.trainer.ppo.ray_trainer import Role
         
         resource_pool_spec = {
@@ -133,12 +132,7 @@ class CurriculumTaskRunner:
         )
         
         from verl.workers.engine_workers import ActorRolloutRefWorker
-        actor_rollout_cls = RayClassWithInitArgs(
-            cls=ray.remote(ActorRolloutRefWorker),
-            config=config.actor_rollout_ref,
-            role=str(Role.ActorRolloutRef),
-        )
-        self.role_worker_mapping[Role.ActorRolloutRef] = actor_rollout_cls
+        self.role_worker_mapping[Role.ActorRolloutRef] = ray.remote(ActorRolloutRefWorker)
         self.mapping[Role.ActorRolloutRef] = "global_pool"
         
         trainer = CurriculumGRPOTrainer(
