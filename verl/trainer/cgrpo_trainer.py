@@ -295,7 +295,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 
                 self.global_steps += 1
                 
-                if self.global_steps % self.config.trainer.test_freq == 0:
+                if self.config.trainer.save_freq > 0 and self.global_steps % self.config.trainer.save_freq == 0:
+                    self._save_checkpoint()
+                
+                if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
                     val_metrics = self._validate()
                     logger.log(data=val_metrics, step=self.global_steps)
                 
