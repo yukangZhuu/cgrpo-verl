@@ -6,8 +6,8 @@
 set -x
 
 # Data paths
-TRAIN_DATA="$HOME/data/gsm8k_main_train_qwen3-32b/gsm8k_train_teacher_traces.jsonl"
-VAL_DATA="$HOME/data/gsm8k_main_test_qwen3-32b/gsm8k_test_teacher_traces.jsonl"
+TRAIN_DATA="/root/autodl-tmp/cgrpo-verl/data/gsm8k_main_train_qwen3-32b/gsm8k_train_teacher_traces.jsonl"
+VAL_DATA="/root/autodl-tmp/cgrpo-verl/data/gsm8k_main_test_qwen3-32b/gsm8k_test_teacher_traces.jsonl"
 
 # Check if data exists
 if [ ! -f "$TRAIN_DATA" ]; then
@@ -25,12 +25,12 @@ python3 -m verl.trainer.main_cgrpo \
     data.max_response_length=1024 \
     \
     curriculum.initial_k=1 \
-    curriculum.max_k=10 \
-    curriculum.ema_alpha=0.2 \
-    curriculum.base_threshold=0.92 \
+    curriculum.max_k=6 \
+    curriculum.ema_alpha=0.3 \
+    curriculum.base_threshold=0.9 \
     curriculum.threshold_decay=0.95 \
     curriculum.patience=1000 \
-    curriculum.min_steps_per_k=20 \
+    curriculum.min_steps_per_k=25 \
     curriculum.early_stop_enabled=true \
     curriculum.early_stop_threshold=0.75 \
     curriculum.early_stop_min_steps=20 \
@@ -64,7 +64,7 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb"]' \
     trainer.project_name='verl_cgrpo_gsm8k_qwen3_0.6b_gsm8k' \
-    trainer.experiment_name='verl_cgrpo_gsm8k_qwen3_0.6b_gsm8k_2.14' \
+    trainer.experiment_name='verl_cgrpo_gsm8k_qwen3_0.6b_gsm8k_2.14_2' \
     trainer.n_gpus_per_node=1 \
     trainer.nnodes=1 \
     trainer.save_freq=30 \
