@@ -22,6 +22,12 @@ from typing import Any, Optional
 import numpy as np
 import torch
 
+try:
+    from math_verify import parse, verify, LatexExtractionConfig, ExprExtractionConfig, StringExtractionConfig
+    MATH_VERIFY_AVAILABLE = True
+except ImportError:
+    MATH_VERIFY_AVAILABLE = False
+
 from verl.workers.reward_manager.abstract import AbstractRewardManager
 
 logger = logging.getLogger(__name__)
@@ -241,11 +247,8 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         """
         Extract final answer from response text.
         
-        Supports multiple formats:
-        1. <answer>42</answer>
-        2. #### 42
-        3. The answer is 42.
-        4. Plain number at the end
+        Only supports:
+        1. \boxed{42}
         
         Args:
             text: Response text.
@@ -253,37 +256,34 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         Returns:
             Extracted answer string.
         """
-        if self.answer_start in text and self.answer_end in text:
-            pattern = re.escape(self.answer_start) + r'\s*(-?[\d,\.]+)\s*' + re.escape(self.answer_end)
-            match = re.search(pattern, text)
-            if match:
-                return match.group(1).replace(',', '')
+        # Try extracting from \boxed{}
+        boxed_start = r'\boxed{'
+        start_idx = text.rfind(boxed_start)
         
-        if "####" in text:
-            match = re.search(r'####\s*(-?[\d,\.]+)', text)
-            if match:
-                return match.group(1).replace(',', '')
-        
-        patterns = [
-            r'(?:the\s+)?answer\s+is\s+(-?[\d,\.]+)',
-            r'(?:therefore|thus|so),?\s+(?:the\s+)?answer\s+is\s+(-?[\d,\.]+)',
-            r'=\s*(-?[\d,\.]+)\s*$',
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                return match.group(1).replace(',', '')
-        
-        numbers = re.findall(r'-?[\d,\.]+', text)
-        if numbers:
-            return numbers[-1].replace(',', '')
+        if start_idx != -1:
+            content_start = start_idx + len(boxed_start)
+            brace_count = 0
+            content_end = -1
+            
+            for i in range(content_start, len(text)):
+                char = text[i]
+                if char == '{':
+                    brace_count += 1
+                elif char == '}':
+                    if brace_count == 0:
+                        content_end = i
+                        break
+                    else:
+                        brace_count -= 1
+            
+            if content_end != -1:
+                return text[content_start:content_end].strip()
         
         return ""
     
     def _check_answer(self, extracted: str, ground_truth: str) -> bool:
         """
-        Check if extracted answer matches ground truth.
+        Check if extracted answer matches ground truth using math-verify.
         
         Args:
             extracted: Extracted answer.
@@ -292,15 +292,156 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         Returns:
             True if answers match.
         """
-        if not extracted or not ground_truth:
+        if MATH_VERIFY_AVAILABLE:
+            return self._verify_answer_with_math_verify(ground_truth, extracted)
+        else:
+            return self._verify_answer_fallback(ground_truth, extracted)
+
+    def _verify_answer_with_math_verify(self, ground_truth: str, model_answer: str) -> bool:
+        if self._is_empty(ground_truth) or self._is_empty(model_answer):
             return False
         
+        gt_clean = re.sub(r'\s+', '', ground_truth.strip())
+        ma_clean = re.sub(r'\s+', '', model_answer.strip())
+        if gt_clean == ma_clean:
+            return True
+        
+        if self._is_number(ground_truth) and self._is_number(model_answer):
+            if self._compare_numbers(ground_truth, model_answer):
+                return True
+        
         try:
-            ext_val = float(extracted.replace(',', '').replace('$', '').strip())
-            gt_val = float(ground_truth.replace(',', '').replace('$', '').strip())
-            return abs(ext_val - gt_val) < 1e-6
-        except (ValueError, AttributeError):
-            return extracted.strip().lower() == ground_truth.strip().lower()
+            parsed_gt = parse(ground_truth, extraction_config=[
+                LatexExtractionConfig(),
+                ExprExtractionConfig(),
+                StringExtractionConfig()
+            ])
+            parsed_ma = parse(model_answer, extraction_config=[
+                LatexExtractionConfig(),
+                ExprExtractionConfig(),
+                StringExtractionConfig()
+            ])
+            if parsed_gt and parsed_ma:
+                result = verify(parsed_gt, parsed_ma)
+                if result:
+                    return True
+        except Exception as e:
+            pass
+        
+        try:
+            mcq_answers = ['A', 'B', 'C', 'D', 'E']
+            config = StringExtractionConfig(strings=tuple(mcq_answers))
+            parsed_gt = parse(ground_truth, extraction_config=[config])
+            parsed_ma = parse(model_answer, extraction_config=[config])
+            if parsed_gt and parsed_ma:
+                result = verify(parsed_gt, parsed_ma)
+                if result:
+                    return True
+        except Exception as e:
+            pass
+        
+        try:
+            parsed_gt = parse(ground_truth, extraction_config=[ExprExtractionConfig()])
+            parsed_ma = parse(model_answer, extraction_config=[ExprExtractionConfig()])
+            if parsed_gt and parsed_ma:
+                result = verify(parsed_gt, parsed_ma)
+                if result:
+                    return True
+        except Exception as e:
+            pass
+        
+        try:
+            wrapped_gt = self._wrap_latex(ground_truth)
+            wrapped_ma = self._wrap_latex(model_answer)
+            
+            parsed_gt = parse(wrapped_gt, extraction_config=[LatexExtractionConfig()])
+            parsed_ma = parse(wrapped_ma, extraction_config=[LatexExtractionConfig()])
+            
+            if parsed_gt and parsed_ma:
+                result = verify(parsed_gt, parsed_ma)
+                if result:
+                    return True
+        except Exception as e:
+            pass
+        
+        try:
+            numbers_gt = re.findall(r'[-+]?\d*\.?\d+', ground_truth)
+            numbers_ma = re.findall(r'[-+]?\d*\.?\d+', model_answer)
+            if numbers_gt and numbers_ma:
+                if numbers_gt == numbers_ma:
+                    return True
+        except Exception as e:
+            pass
+        
+        return False
+
+    def _verify_answer_fallback(self, ground_truth: str, model_answer: str) -> bool:
+        if self._is_empty(ground_truth) or self._is_empty(model_answer):
+            return False
+        
+        gt_clean = re.sub(r'\s+', '', ground_truth.strip())
+        ma_clean = re.sub(r'\s+', '', model_answer.strip())
+        if gt_clean == ma_clean:
+            return True
+        
+        if self._is_number(ground_truth) and self._is_number(model_answer):
+            if self._compare_numbers(ground_truth, model_answer):
+                return True
+        
+        try:
+            numbers_gt = re.findall(r'[-+]?\d*\.?\d+', ground_truth)
+            numbers_ma = re.findall(r'[-+]?\d*\.?\d+', model_answer)
+            if numbers_gt and numbers_ma:
+                if numbers_gt == numbers_ma:
+                    return True
+        except Exception as e:
+            pass
+        
+        return False
+
+    def _is_empty(self, text: str) -> bool:
+        return not text or text.strip() == ""
+
+    def _is_number(self, text: str) -> bool:
+        try:
+            float(text.strip())
+            return True
+        except ValueError:
+            return False
+
+    def _compare_numbers(self, num1: str, num2: str) -> bool:
+        try:
+            n1 = float(num1.strip())
+            n2 = float(num2.strip())
+            return abs(n1 - n2) < 1e-6
+        except ValueError:
+            return False
+
+    def _is_latex_wrapped(self, text: str) -> bool:
+        text = text.strip()
+        
+        latex_patterns = [
+            r'^\\\[.*\\\]$',          
+            r'^\$\$.*\$\$$',          
+            r'^\\boxed\{.*\}$',       
+            r'^\$.*\$',                
+            r'^\\\(.*\\\)$',          
+            r'^\[.*\]$',              
+        ]
+        
+        for pattern in latex_patterns:
+            if re.match(pattern, text, re.DOTALL):
+                return True
+        
+        return False
+
+    def _wrap_latex(self, text: str) -> str:
+        text = text.strip()
+        
+        if self._is_latex_wrapped(text):
+            return text
+        
+        return f'\\boxed{{{text}}}'
     
     def _check_format(self, text: str) -> bool:
         """
@@ -312,14 +453,10 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         Returns:
             True if format is valid.
         """
-        if self.answer_start in text and self.answer_end in text:
+        if r'\boxed{' in text:
             return True
         
-        if "####" in text:
-            return True
-        
-        numbers = re.findall(r'-?[\d,\.]+', text)
-        return len(numbers) > 0
+        return False
     
     def _get_response_end_mask(
         self,

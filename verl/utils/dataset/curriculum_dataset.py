@@ -83,6 +83,7 @@ class CurriculumGRPODataset(Dataset):
         self.answer_end = config.get("answer_end", "</answer>")
         
         self.use_chat_template = config.get("use_chat_template", True)
+        self.thought_start_phrase = config.get("thought_start_phrase", "Okay, let's think step by step.")
         
         self._load_data()
         
@@ -157,9 +158,12 @@ class CurriculumGRPODataset(Dataset):
             gt_answer = self._extract_answer(ground_truth)
         else:
             gt_answer = str(ground_truth)
+
+        # Use _build_simple_prompt to ensure consistency with curriculum prompt
+        raw_prompt = self._build_simple_prompt(question)
         
         return {
-            "raw_prompt": [{"role": "user", "content": question}],
+            "raw_prompt": raw_prompt,
             "steps": steps,
             "teacher_answer": teacher_answer,
             "ground_truth": gt_answer,
@@ -227,7 +231,6 @@ class CurriculumGRPODataset(Dataset):
         cut_index = max(0, num_steps - current_k)
         
         teacher_prefix_steps = steps[:cut_index]
-        student_target_steps = steps[cut_index:]
         
         teacher_prefix = "\n".join(teacher_prefix_steps) if teacher_prefix_steps else ""
         
@@ -253,8 +256,16 @@ class CurriculumGRPODataset(Dataset):
         Returns:
             Formatted prompt string.
         """
+        system_prompt = "You are an expert mathematician with strong problem-solving skills. Carefully analyze mathematical problems and provide step-by-step reasoning to arrive at the correct answer."
+        prompt_instruction = "Please reason step by step to solve this problem.\nAfter your reasoning, you MUST put your final answer within \\boxed{} tags. For example, If the answer is 42, write \\boxed{42}.\n\nBegin your reasoning:"
+        
+        content = f"{question}\n\n{prompt_instruction}"
+        
         if self.use_chat_template:
-            messages = [{"role": "user", "content": question}]
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": content}
+            ]
             prompt = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
@@ -262,26 +273,41 @@ class CurriculumGRPODataset(Dataset):
             )
             
             if teacher_prefix:
-                prompt += f"{self.thinking_start}\n{teacher_prefix}"
+                prompt += f"\n{self.thinking_start}\n{self.thought_start_phrase}\n{teacher_prefix}"
+            else:
+                prompt += f"\n{self.thinking_start}"
         else:
-            prompt = f"<|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant\n"
+            prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{content}<|im_end|>\n<|im_start|>assistant\n"
             
             if teacher_prefix:
-                prompt += f"{self.thinking_start}\n{teacher_prefix}"
+                prompt += f"{self.thinking_start}\n{self.thought_start_phrase}\n{teacher_prefix}"
+            else:
+                prompt += f"{self.thinking_start}"
         
         return prompt
     
     def _build_simple_prompt(self, question: str) -> str:
         """Build simple prompt without chat template."""
+        
+        system_prompt = "You are an expert mathematician with strong problem-solving skills. Carefully analyze mathematical problems and provide step-by-step reasoning to arrive at the correct answer."
+        prompt_instruction = "Please reason step by step to solve this problem.\nAfter your reasoning, you MUST put your final answer within \\boxed{} tags. For example, If the answer is 42, write \\boxed{42}.\n\nBegin your reasoning:"
+        
+        content = f"{question}\n\n{prompt_instruction}"
+        
         if self.use_chat_template:
-            messages = [{"role": "user", "content": question}]
-            return self.tokenizer.apply_chat_template(
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": content}
+            ]
+            prompt = self.tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
             )
+            prompt += f"\n{self.thinking_start}\n{self.thought_start_phrase}"
+            return prompt
         else:
-            return f"<|im_start|>user\n{question}<|im_end|>\n<|im_start|>assistant\n"
+            return f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{content}<|im_end|>\n<|im_start|>assistant\n{self.thinking_start}\n{self.thought_start_phrase}"
 
 def create_curriculum_collate_fn(
     tokenizer: PreTrainedTokenizer,

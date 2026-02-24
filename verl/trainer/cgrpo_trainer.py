@@ -31,6 +31,7 @@ import uuid
 from verl import DataProto
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer, compute_advantage
 from verl.trainer.ppo.core_algos import AdvantageEstimator
+from verl.trainer.ppo.metric_utils import compute_data_metrics
 from verl.utils.curriculum import CurriculumConfig, CurriculumManager
 from verl.utils.dataset.curriculum_dataset import CurriculumGRPODataset
 from verl.workers.reward_manager.cgrpo import CurriculumGRPORewardManager
@@ -269,6 +270,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     norm_adv_by_std_in_grpo=self.config.algorithm.get("norm_adv_by_std_in_grpo", True),
                     config=self.config.algorithm,
                 )
+
+                # Compute data metrics (e.g., critic scores, rewards, advantages)
+                data_metrics = compute_data_metrics(batch=batch, use_critic=self.use_critic)
+                metrics.update(data_metrics)
                 
                 actor_output = self._update_actor(batch)
                 self.checkpoint_manager.update_weights()
