@@ -245,14 +245,14 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 batch.batch["token_level_scores"] = reward_tensor
                 batch.batch["token_level_rewards"] = reward_tensor
                 
-                if self.config.trainer.get("debug_dump_samples", False):
-                    self._dump_debug_samples(
-                        batch=batch,
-                        reward_tensor=reward_tensor,
-                        reward_extra_info=reward_extra_info,
-                        current_k=current_k,
-                        num_samples=self.config.trainer.get("debug_num_samples", 5),
-                    )
+                # if self.config.trainer.get("debug_dump_samples", False):
+                #     self._dump_debug_samples(
+                #         batch=batch,
+                #         reward_tensor=reward_tensor,
+                #         reward_extra_info=reward_extra_info,
+                #         current_k=current_k,
+                #         num_samples=self.config.trainer.get("debug_num_samples", 5),
+                #     )
                 
                 old_log_prob, old_log_prob_mfu = self._compute_old_log_prob(batch)
                 batch = batch.union(old_log_prob)
@@ -306,6 +306,15 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
                     val_metrics = self._validate()
                     logger.log(data=val_metrics, step=self.global_steps)
+                    if self.config.trainer.get("debug_dump_samples", False):
+                        # Use a small number of samples for validation logging
+                        self._dump_debug_samples(
+                            batch=batch, # Note: using training batch here for structure, but ideally should capture validation batch
+                            reward_tensor=reward_tensor,
+                            reward_extra_info=reward_extra_info,
+                            current_k=current_k,
+                            num_samples=2, # Small sample size for quick check
+                        )
                 
                 if self.curriculum_manager.should_stop():
                     logger.info(

@@ -44,13 +44,13 @@ class CurriculumAgentLoop(AgentLoopBase):
         self.prompt_length = self.config.actor_rollout_ref.rollout.prompt_length
         self.response_length = self.config.actor_rollout_ref.rollout.response_length
         
-        self.thinking_start = self.config.data.get("thinking_start", "hardt")
-        self.thinking_end = self.config.data.get("thinking_end", "hardt")
+        self.thinking_start = self.config.data.get("thinking_start", "<think>")
+        self.thinking_end = self.config.data.get("thinking_end", "</think>")
         self.answer_start = self.config.data.get("answer_start", "<answer>")
         self.answer_end = self.config.data.get("answer_end", "</answer>")
         self.instruction_following = self.config.data.get(
             "instruction_following",
-            'Let\'s think step by step and output the final answer after "####".',
+            None,
         )
         
         self.current_k = self.config.curriculum.get("initial_k", 1)

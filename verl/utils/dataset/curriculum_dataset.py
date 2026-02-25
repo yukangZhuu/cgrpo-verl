@@ -180,30 +180,6 @@ class CurriculumGRPODataset(Dataset):
         }
     
     def _extract_answer(self, text: str) -> str:
-        """
-        Extract final answer from text.
-        
-        Handles formats like:
-        - "#### 42"
-        - "<answer>42</answer>"
-        - Plain number
-        """
-        import re
-        
-        if "####" in text:
-            match = re.search(r'####\s*(-?[\d,\.]+)', text)
-            if match:
-                return match.group(1).replace(',', '')
-        
-        if "<answer>" in text:
-            match = re.search(r'<answer>\s*(-?[\d,\.]+)\s*</answer>', text)
-            if match:
-                return match.group(1).replace(',', '')
-        
-        numbers = re.findall(r'-?[\d,\.]+', text)
-        if numbers:
-            return numbers[-1].replace(',', '')
-        
         return text.strip()
     
     def build_curriculum_prompt(
@@ -256,8 +232,12 @@ class CurriculumGRPODataset(Dataset):
         Returns:
             Formatted prompt string.
         """
-        system_prompt = "You are an expert mathematician with strong problem-solving skills. Carefully analyze mathematical problems and provide step-by-step reasoning to arrive at the correct answer."
-        prompt_instruction = "Please reason step by step to solve this problem.\nAfter your reasoning, you MUST put your final answer within \\boxed{} tags. For example, If the answer is 42, write \\boxed{42}.\n\nBegin your reasoning:"
+        system_prompt = "You are an expert mathematician. You should think step-by-step."
+        prompt_instruction = (
+            "Please reason step by step to solve this problem.\n"
+            f"Put your detailed reasoning process within {self.thinking_start} and {self.thinking_end} tags.\n"
+            "After {self.thinking_end} tag, you MUST put your final answer within \\boxed{} tags. For example: \\boxed{42}."
+        )
         
         content = f"{question}\n\n{prompt_instruction}"
         
@@ -289,8 +269,13 @@ class CurriculumGRPODataset(Dataset):
     def _build_simple_prompt(self, question: str) -> str:
         """Build simple prompt without chat template."""
         
-        system_prompt = "You are an expert mathematician with strong problem-solving skills. Carefully analyze mathematical problems and provide step-by-step reasoning to arrive at the correct answer."
-        prompt_instruction = "Please reason step by step to solve this problem.\nAfter your reasoning, you MUST put your final answer within \\boxed{} tags. For example, If the answer is 42, write \\boxed{42}.\n\nBegin your reasoning:"
+        system_prompt = "You are an expert mathematician. You should think step-by-step."
+        prompt_instruction = (
+            "Please reason step by step to solve this problem.\n"
+            f"Put your detailed reasoning process within {self.thinking_start} and {self.thinking_end} tags.\n"
+            "After your reasoning, you MUST put your final answer within \\boxed{} tags.\n"
+            "For example: \\boxed{42}."
+        )
         
         content = f"{question}\n\n{prompt_instruction}"
         

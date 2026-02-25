@@ -114,6 +114,6 @@ trainer:
   default_local_dir: "./checkpoints/cgrpo"
 
   # Debug options
-  debug_dump_samples: false # Set to true to enable sample dumping
+  debug_dump_samples: true # Set to true to enable sample dumping
   debug_dump_dir: "./debug_samples" # Directory to save debug samples
   debug_num_samples: 5 # Number of samples to dump per step
