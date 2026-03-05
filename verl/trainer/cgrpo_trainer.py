@@ -203,9 +203,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         
         self.global_steps += 1
         
-        # [Verification] Force single epoch
-        self.config.trainer.total_epochs = current_epoch + 1
-
         for epoch in range(current_epoch, self.config.trainer.total_epochs):
             for batch_dict in self.train_dataloader:
                 metrics = {}
@@ -223,15 +220,17 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 batch = self._create_curriculum_batch(batch, current_k)
 
                 # [Verification] Log Point 1: Input Data
-                try:
-                    self._log_verification("1. Input Data", {
-                        "batch_size": len(batch),
-                        "teacher_prefix_sample": batch.non_tensor_batch["teacher_prefix"][0] if len(batch) > 0 else "N/A",
-                        "raw_prompt_sample": str(batch.non_tensor_batch["raw_prompt"][0]) if len(batch) > 0 else "N/A",
-                        "current_k": current_k
-                    })
-                except Exception as e:
-                    logger.warning(f"Verification logging failed at Point 1: {e}")
+                # if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
+                #     try:
+                #         self._log_verification("1. Input Data", {
+                #             "step": self.global_steps,
+                #             "batch_size": len(batch),
+                #             "teacher_prefix_sample": batch.non_tensor_batch["teacher_prefix"][0] if len(batch) > 0 else "N/A",
+                #             "raw_prompt_sample": str(batch.non_tensor_batch["raw_prompt"][0]) if len(batch) > 0 else "N/A",
+                #             "current_k": current_k
+                #         })
+                #     except Exception as e:
+                #         logger.warning(f"Verification logging failed at Point 1: {e}")
                 
                 gen_batch = self._get_gen_batch(batch)
                 gen_batch.meta_info["global_steps"] = self.global_steps
@@ -245,21 +244,23 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 gen_batch_output = self.async_rollout_manager.generate_sequences(gen_batch_output)
                 
                 # [Verification] Log Point 2: Model Output
-                try:
-                    responses = gen_batch_output.batch["responses"]
-                    prompts = gen_batch_output.batch["prompts"]
-                    
-                    decoded_response = self.tokenizer.decode(responses[0], skip_special_tokens=False) if len(responses) > 0 else "N/A"
-                    decoded_prompt = self.tokenizer.decode(prompts[0], skip_special_tokens=False) if len(prompts) > 0 else "N/A"
-                    
-                    self._log_verification("2. Model Output", {
-                        "prompts_shape": prompts.shape,
-                        "responses_shape": responses.shape,
-                        "sample_prompt_decoded": decoded_prompt,
-                        "sample_response_decoded": decoded_response,
-                    })
-                except Exception as e:
-                    logger.warning(f"Verification logging failed at Point 2: {e}")
+                # if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
+                #     try:
+                #         responses = gen_batch_output.batch["responses"]
+                #         prompts = gen_batch_output.batch["prompts"]
+                #         
+                #         decoded_response = self.tokenizer.decode(responses[0], skip_special_tokens=False) if len(responses) > 0 else "N/A"
+                #         decoded_prompt = self.tokenizer.decode(prompts[0], skip_special_tokens=False) if len(prompts) > 0 else "N/A"
+                #         
+                #         self._log_verification("2. Model Output", {
+                #             "step": self.global_steps,
+                #             "prompts_shape": prompts.shape,
+                #             "responses_shape": responses.shape,
+                #             "sample_prompt_decoded": decoded_prompt,
+                #             "sample_response_decoded": decoded_response,
+                #         })
+                #     except Exception as e:
+                #         logger.warning(f"Verification logging failed at Point 2: {e}")
 
                 self.checkpoint_manager.sleep_replicas()
                 
@@ -276,16 +277,17 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 reward_tensor, reward_extra_info = self._compute_curriculum_reward(batch)
                 
                 # [Verification] Log Point 3: Reward
-                try:
-                    self._log_verification("3. Reward Computation", {
-                        "reward_tensor_shape": reward_tensor.shape,
-                        "mean_reward": reward_tensor.sum(dim=-1).mean().item(),
-                        "sample_extracted_answer": reward_extra_info.get("extracted_answers", [])[0] if reward_extra_info else "N/A",
-                        "sample_ground_truth": reward_extra_info.get("ground_truths", [])[0] if reward_extra_info else "N/A",
-                        "sample_is_correct": reward_extra_info.get("is_correct", [])[0] if reward_extra_info else "N/A"
-                    })
-                except Exception as e:
-                    logger.warning(f"Verification logging failed at Point 3: {e}")
+                if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
+                    try:
+                        self._dump_debug_samples(
+                            batch=batch,
+                            reward_tensor=reward_tensor,
+                            reward_extra_info=reward_extra_info,
+                            current_k=current_k,
+                            num_samples=len(batch), # Dump all samples in the batch for analysis
+                        )
+                    except Exception as e:
+                        logger.warning(f"Verification logging failed at Point 3: {e}")
 
                 batch.batch["token_level_scores"] = reward_tensor
                 batch.batch["token_level_rewards"] = reward_tensor
@@ -323,12 +325,14 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 actor_output = self._update_actor(batch)
                 
                 # [Verification] Log Point 4: Update
-                try:
-                    self._log_verification("4. Parameter Update", {
-                        "actor_output_metrics": actor_output,
-                    })
-                except Exception as e:
-                    logger.warning(f"Verification logging failed at Point 4: {e}")
+                # if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
+                #     try:
+                #         self._log_verification("4. Parameter Update", {
+                #             "step": self.global_steps,
+                #             "actor_output_metrics": actor_output,
+                #         })
+                #     except Exception as e:
+                #         logger.warning(f"Verification logging failed at Point 4: {e}")
 
                 self.checkpoint_manager.update_weights()
                 
@@ -379,11 +383,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     self._save_checkpoint()
                     progress_bar.close()
                     return
-                
-                # [Verification] Force single step
-                logger.info("Verification: Single step completed. Breaking loop.")
-                progress_bar.close()
-                return
         
         progress_bar.close()
     
@@ -455,6 +454,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             
             extracted_answer = reward_extra_info.get("extracted_answers", [""] * n_samples)[i] if reward_extra_info else ""
             is_correct = reward_extra_info.get("is_correct", [False] * n_samples)[i] if reward_extra_info else False
+            failure_reason = reward_extra_info.get("failure_reasons", ["none"] * n_samples)[i] if reward_extra_info else "none"
             
             reward_sum = reward_tensor[i].sum().item()
             
@@ -462,14 +462,15 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 "step": self.global_steps,
                 "k": current_k,
                 "index": i,
-                "cut_index": cut_index,
+                "cut_index": int(cut_index),
                 "teacher_prefix": teacher_prefix[:500] + "..." if len(str(teacher_prefix)) > 500 else teacher_prefix,
                 "ground_truth": str(ground_truth),
-                "prompt_text": prompt_text,
-                "response_text": response_text,
+                "prompt_text": prompt_text[:1000] + "..." if len(prompt_text) > 1000 else prompt_text, # Sampled
+                "response_text": response_text[:1000] + "..." if len(response_text) > 1000 else response_text, # Sampled
                 "extracted_answer": extracted_answer,
-                "is_correct": is_correct,
-                "reward": reward_sum,
+                "is_correct": bool(is_correct),
+                "failure_reason": failure_reason,
+                "reward": float(reward_sum),
             }
             samples.append(sample)
         

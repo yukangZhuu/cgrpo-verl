@@ -74,7 +74,8 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
             **kwargs: Additional arguments.
         """
         self.tokenizer = tokenizer
-        self.num_examine = num_examine
+        # Disable internal logging by default as we use Trainer's unified dump
+        self.num_examine = 0 
         self.format_score = format_score
         self.correct_score = correct_score
         self.answer_start = answer_start
@@ -137,6 +138,8 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
             "ground_truths": [],
             "is_correct": [],
             "has_format": [],
+            "failure_reasons": [],
+            "is_truncated": [],
         }
         
         for i in range(batch_size):
@@ -147,18 +150,41 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
             is_correct = self._check_answer(extracted_answer, ground_truth)
             has_format = self._check_format(response_text)
             
+            response_mask = self._get_response_end_mask(
+                responses[i],
+                attention_mask[i] if attention_mask is not None else None,
+                response_length,
+            )
+            last_valid_idx = response_mask.sum().item() - 1
+            is_truncated = False
+            if last_valid_idx == response_length - 1:
+                eos_id = getattr(self.tokenizer, "eos_token_id", None)
+                last_token = responses[i, last_valid_idx].item()
+                if eos_id is None or last_token != eos_id:
+                    is_truncated = True
+            
+            failure_reason = "none"
             if is_correct:
                 reward = self.correct_score
             elif has_format and not self.strict_format:
                 reward = self.format_score
+                failure_reason = "wrong_answer"
             else:
                 reward = 0.0
+                if is_truncated:
+                    failure_reason = "truncated"
+                elif not has_format:
+                    failure_reason = "format_error"
+                else:
+                    failure_reason = "wrong_answer"
             
             rewards.append(reward)
             extra_info["extracted_answers"].append(extracted_answer)
             extra_info["ground_truths"].append(ground_truth)
             extra_info["is_correct"].append(is_correct)
             extra_info["has_format"].append(has_format)
+            extra_info["failure_reasons"].append(failure_reason)
+            extra_info["is_truncated"].append(is_truncated)
         
         reward_tensor = torch.zeros(batch_size, response_length, dtype=torch.float32)
         for i, reward in enumerate(rewards):
@@ -177,6 +203,7 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
                 extra_info["extracted_answers"][:self.num_examine],
                 ground_truths[:self.num_examine],
                 rewards[:self.num_examine],
+                extra_info["failure_reasons"][:self.num_examine],
             )
         
         if return_dict:
@@ -491,6 +518,7 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         extracted_answers: list[str],
         ground_truths: list[str],
         rewards: list[float],
+        failure_reasons: list[str],
     ):
         """
         Log sample details for debugging.
@@ -505,13 +533,22 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         logger.info("Curriculum-GRPO Reward Samples:")
         logger.info("=" * 50)
         
-        for i, (resp, ext, gt, rew) in enumerate(
-            zip(response_texts, extracted_answers, ground_truths, rewards)
+        for i, (resp, ext, gt, rew, reason) in enumerate(
+            zip(response_texts, extracted_answers, ground_truths, rewards, failure_reasons)
         ):
+            # Only log detailed info for failed samples or a few success ones
+            # For now, log all passed samples (up to num_examine)
+            
             logger.info(f"\n--- Sample {i} ---")
             logger.info(f"Response (last 200 chars): ...{resp[-200:]}")
             logger.info(f"Extracted: {ext}")
             logger.info(f"Ground Truth: {gt}")
             logger.info(f"Reward: {rew}")
+            
+            if rew == 0.0:
+                logger.info("Status: FAILED")
+                logger.info(f"Failure Reason: {reason}")
+            else:
+                logger.info("Status: SUCCESS")
         
         logger.info("=" * 50)
