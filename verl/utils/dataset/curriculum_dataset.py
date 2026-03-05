@@ -159,8 +159,8 @@ class CurriculumGRPODataset(Dataset):
         else:
             gt_answer = str(ground_truth)
 
-        # Use _build_simple_prompt to ensure consistency with curriculum prompt
-        raw_prompt = self._build_simple_prompt(question)
+        # Return raw messages to be formatted by AgentLoop
+        raw_prompt = self._build_prompt_messages(question)
         
         return {
             "raw_prompt": raw_prompt,
@@ -182,117 +182,25 @@ class CurriculumGRPODataset(Dataset):
     def _extract_answer(self, text: str) -> str:
         return text.strip()
     
-    def build_curriculum_prompt(
-        self,
-        item: dict,
-        current_k: int,
-    ) -> tuple[str, str, int]:
-        """
-        Build curriculum-aware prompt for a given item.
+    def _build_prompt_messages(self, question: str) -> list[dict]:
+        """Build prompt messages without applying chat template."""
         
-        Args:
-            item: Data item containing question and steps.
-            current_k: Current curriculum level (number of steps student should generate).
-        
-        Returns:
-            Tuple of (full_prompt, teacher_prefix, cut_index).
-        """
-        question = item.get("question", "")
-        steps = item.get("steps", [])
-        
-        if not steps:
-            return self._build_simple_prompt(question), "", 0
-        
-        num_steps = len(steps)
-        cut_index = max(0, num_steps - current_k)
-        
-        teacher_prefix_steps = steps[:cut_index]
-        
-        teacher_prefix = "\n".join(teacher_prefix_steps) if teacher_prefix_steps else ""
-        
-        full_prompt = self._build_chatml_prompt(
-            question=question,
-            teacher_prefix=teacher_prefix,
-        )
-        
-        return full_prompt, teacher_prefix, cut_index
-    
-    def _build_chatml_prompt(
-        self,
-        question: str,
-        teacher_prefix: str = "",
-    ) -> str:
-        """
-        Build ChatML format prompt.
-        
-        Args:
-            question: User question.
-            teacher_prefix: Teacher's reasoning prefix (steps student doesn't need to generate).
-        
-        Returns:
-            Formatted prompt string.
-        """
-        system_prompt = "You are an expert mathematician. You should think step-by-step."
-        prompt_instruction = (
-            "Please reason step by step to solve this problem.\n"
-            f"Put your detailed reasoning process within {self.thinking_start} and {self.thinking_end} tags.\n"
-            "After {self.thinking_end} tag, you MUST put your final answer within \\boxed{} tags. For example: \\boxed{42}."
-        )
+    system_prompt = "You are an expert mathematician. You should think step-by-step."
+    prompt_instruction = (
+        "Please reason step by step to solve this problem.\n"
+        f"Put your detailed reasoning process within {self.thinking_start} and {self.thinking_end} tags.\n"
+        "Inside these tags, if some reasoning steps are already provided, continue the reasoning from them instead of starting from scratch.\n"
+        "After your reasoning, briefly summarize the key steps in several short sentences and then put your final answer within \\boxed{} tags. For example: \\boxed{42}.\n"
+    )
         
         content = f"{question}\n\n{prompt_instruction}"
         
-        if self.use_chat_template:
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content}
-            ]
-            prompt = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-            )
-            
-            if teacher_prefix:
-                prompt += f"\n{self.thinking_start}\n{self.thought_start_phrase}\n{teacher_prefix}"
-            else:
-                prompt += f"\n{self.thinking_start}"
-        else:
-            prompt = f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{content}<|im_end|>\n<|im_start|>assistant\n"
-            
-            if teacher_prefix:
-                prompt += f"{self.thinking_start}\n{self.thought_start_phrase}\n{teacher_prefix}"
-            else:
-                prompt += f"{self.thinking_start}"
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": content}
+        ]
         
-        return prompt
-    
-    def _build_simple_prompt(self, question: str) -> str:
-        """Build simple prompt without chat template."""
-        
-        system_prompt = "You are an expert mathematician. You should think step-by-step."
-        prompt_instruction = (
-            "Please reason step by step to solve this problem.\n"
-            f"Put your detailed reasoning process within {self.thinking_start} and {self.thinking_end} tags.\n"
-            "After your reasoning, you MUST put your final answer within \\boxed{} tags.\n"
-            "For example: \\boxed{42}."
-        )
-        
-        content = f"{question}\n\n{prompt_instruction}"
-        
-        if self.use_chat_template:
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content}
-            ]
-            prompt = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-            )
-            prompt += f"\n{self.thinking_start}\n{self.thought_start_phrase}"
-            return prompt
-        else:
-            return f"<|im_start|>system\n{system_prompt}<|im_end|>\n<|im_start|>user\n{content}<|im_end|>\n<|im_start|>assistant\n{self.thinking_start}\n{self.thought_start_phrase}"
+        return messages
 
 def create_curriculum_collate_fn(
     tokenizer: PreTrainedTokenizer,

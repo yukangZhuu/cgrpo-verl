@@ -82,19 +82,26 @@ class CurriculumAgentLoop(AgentLoopBase):
         teacher_prefix = kwargs.get("teacher_prefix", "")
         current_k = kwargs.get("current_k", self.current_k)
         
-        if teacher_prefix:
-            prompt_ids = await self._build_curriculum_prompt_with_prefix(
-                messages=messages,
-                teacher_prefix=teacher_prefix,
-            )
-        elif steps:
-            prompt_ids = await self._build_curriculum_prompt(
-                messages=messages,
-                steps=steps,
-                current_k=current_k,
-            )
-        else:
-            prompt_ids = await self.apply_chat_template(messages)
+        # Unify steps and teacher_prefix handling
+        # Priority: teacher_prefix > steps > nothing
+        
+        teacher_prefix = kwargs.get("teacher_prefix", "")
+        steps = kwargs.get("steps", [])
+        current_k = kwargs.get("current_k", self.current_k)
+        
+        # If teacher_prefix is not provided but steps are, derive prefix from steps
+        if not teacher_prefix and steps:
+            num_steps = len(steps)
+            cut_index = max(0, num_steps - current_k)
+            teacher_prefix_steps = steps[:cut_index]
+            if teacher_prefix_steps:
+                teacher_prefix = "\n".join(teacher_prefix_steps)
+        
+        # Build prompt
+        prompt_ids = await self._build_prompt(
+            messages=messages,
+            teacher_prefix=teacher_prefix
+        )
         
         metrics = {}
         with simple_timer("generate_sequences", metrics):
@@ -127,13 +134,15 @@ class CurriculumAgentLoop(AgentLoopBase):
         )
         return output
     
-    async def _build_curriculum_prompt_with_prefix(
+    async def _build_prompt(
         self,
         messages: list[dict],
-        teacher_prefix: str,
+        teacher_prefix: str = "",
     ) -> list[int]:
         """
-        Build curriculum-aware prompt with pre-computed teacher prefix.
+        Build curriculum-aware prompt with optional teacher prefix.
+        
+        Handles ChatML formatting and smart truncation.
         
         Args:
             messages: Original messages (user question).
@@ -144,23 +153,59 @@ class CurriculumAgentLoop(AgentLoopBase):
         """
         messages = self._add_instruction_following(messages)
         
-        if not teacher_prefix:
-            return await self.apply_chat_template(messages)
+        # If no prefix, just use standard chat template
+        # BUT we still want to enforce thinking format if possible.
+        # However, standard apply_chat_template usually ends with assistant header.
+        # If we append thinking start, we force the model to think.
         
-        assistant_prefix = f"{self.thinking_start}\n{teacher_prefix}"
+        # Construct prefix with thinking tags
+        # Ensure there is a transition phrase before the teacher prefix
+        # This helps the model align with the "thinking" mode
+        thought_start_phrase = self.config.data.get("thought_start_phrase", "Okay, let's think step by step.")
         
-        prompt_text = self.tokenizer.apply_chat_template(
+        if teacher_prefix:
+            assistant_prefix = f"{self.thinking_start}\n{thought_start_phrase}\n{teacher_prefix}"
+        else:
+            # Even without teacher prefix, we force thinking start
+            assistant_prefix = f"{self.thinking_start}\n{thought_start_phrase}"
+        
+        # 1. Encode base messages (System + User)
+        base_prompt_text = self.tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             add_generation_prompt=True,
         )
-        prompt_text += assistant_prefix
+        base_ids = self.tokenizer.encode(base_prompt_text, add_special_tokens=False)
         
-        prompt_ids = self.tokenizer.encode(prompt_text, add_special_tokens=False)
+        # 2. Encode teacher prefix
+        prefix_ids = self.tokenizer.encode(assistant_prefix, add_special_tokens=False)
         
-        if len(prompt_ids) > self.prompt_length:
-            prompt_ids = prompt_ids[-self.prompt_length:]
-            logger.warning(f"Prompt truncated to {self.prompt_length} tokens")
+        # 3. Combine and Truncate
+        # Strategy: Head Truncation on Teacher Prefix
+        # We prioritize keeping the base prompt (system instruction + question)
+        # and the END of the teacher prefix (most recent reasoning steps).
+        
+        if len(base_ids) + len(prefix_ids) > self.prompt_length:
+            remaining_len = self.prompt_length - len(base_ids)
+            
+            if remaining_len > 0:
+                # Truncate prefix from head (keep last part of reasoning)
+                prefix_ids = prefix_ids[-remaining_len:]
+                prompt_ids = base_ids + prefix_ids
+                logger.warning(
+                    f"Truncated teacher prefix from {len(prefix_ids)+len(base_ids)} "
+                    f"to {self.prompt_length} tokens (Head Truncation)"
+                )
+            else:
+                # Base prompt itself is too long, fall back to standard tail truncation
+                # This is a fallback and shouldn't happen with reasonable prompt_length
+                prompt_ids = (base_ids + prefix_ids)[-self.prompt_length:]
+                logger.warning(
+                    f"Base prompt too long ({len(base_ids)} > {self.prompt_length}), "
+                    f"performing standard tail truncation."
+                )
+        else:
+            prompt_ids = base_ids + prefix_ids
         
         return prompt_ids
     
@@ -189,86 +234,3 @@ class CurriculumAgentLoop(AgentLoopBase):
                 break
         
         return messages
-    
-    async def _build_curriculum_prompt(
-        self,
-        messages: list[dict],
-        steps: list[str],
-        current_k: int,
-    ) -> list[int]:
-        """
-        Build curriculum-aware prompt.
-        
-        Args:
-            messages: Original messages (user question).
-            steps: Teacher's reasoning steps.
-            current_k: Current curriculum level.
-        
-        Returns:
-            Token IDs for the constructed prompt.
-        """
-        messages = self._add_instruction_following(messages)
-        
-        if not steps:
-            prompt_ids = await self.apply_chat_template(messages)
-            return prompt_ids
-        
-        num_steps = len(steps)
-        cut_index = max(0, num_steps - current_k)
-        
-        teacher_prefix_steps = steps[:cut_index]
-        
-        if teacher_prefix_steps:
-            teacher_prefix = "\n".join(teacher_prefix_steps)
-            assistant_prefix = f"{self.thinking_start}\n{teacher_prefix}"
-            
-            prompt_ids = await self._apply_curriculum_chat_template(
-                messages=messages,
-                assistant_prefix=assistant_prefix,
-            )
-        else:
-            prompt_ids = await self.apply_chat_template(messages)
-        
-        return prompt_ids
-    
-    async def _apply_curriculum_chat_template(
-        self,
-        messages: list[dict],
-        assistant_prefix: str,
-    ) -> list[int]:
-        """
-        Apply chat template with assistant prefix.
-        
-        This creates a prompt where the assistant has already started
-        responding with the teacher prefix.
-        
-        Args:
-            messages: User messages.
-            assistant_prefix: Pre-filled assistant content.
-        
-        Returns:
-            Token IDs for the prompt.
-        """
-        full_messages = messages + [{"role": "assistant", "content": assistant_prefix}]
-        
-        prompt_text = self.tokenizer.apply_chat_template(
-            full_messages,
-            tokenize=False,
-            add_generation_prompt=False,
-        )
-        
-        if not prompt_text.endswith(assistant_prefix):
-            prompt_text = self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
-            )
-            prompt_text += assistant_prefix
-        
-        prompt_ids = self.tokenizer.encode(prompt_text, add_special_tokens=False)
-        
-        if len(prompt_ids) > self.prompt_length:
-            prompt_ids = prompt_ids[-self.prompt_length:]
-            logger.warning(f"Prompt truncated to {self.prompt_length} tokens")
-        
-        return prompt_ids

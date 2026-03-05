@@ -176,7 +176,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         """
         from verl.utils.tracking import Tracking
         
-        logger = Tracking(
+        tracking = Tracking(
             project_name=self.config.trainer.project_name,
             experiment_name=self.config.trainer.experiment_name,
             default_backend=self.config.trainer.logger,
@@ -191,7 +191,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         
         if self.config.trainer.get("val_before_train", True):
             val_metrics = self._validate()
-            logger.log(data=val_metrics, step=self.global_steps)
+            tracking.log(data=val_metrics, step=self.global_steps)
             if self.config.trainer.get("val_only", False):
                 return
         
@@ -345,7 +345,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     "training/epoch": epoch,
                 })
                 
-                logger.log(data=metrics, step=self.global_steps)
+                tracking.log(data=metrics, step=self.global_steps)
                 progress_bar.update(1)
                 progress_bar.set_postfix({
                     "k": current_k,
@@ -359,7 +359,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 
                 if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
                     val_metrics = self._validate()
-                    logger.log(data=val_metrics, step=self.global_steps)
+                    tracking.log(data=val_metrics, step=self.global_steps)
                     if self.config.trainer.get("debug_dump_samples", False):
                         # Use a small number of samples for validation logging
                         self._dump_debug_samples(
