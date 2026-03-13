@@ -190,7 +190,7 @@ class CurriculumGRPODataset(Dataset):
             "Please reason step by step to solve this problem.\n"
             f"Put your detailed reasoning process within {self.thinking_start} and {self.thinking_end} tags.\n"
             "Inside these tags, if some reasoning steps are already provided, continue the reasoning from them instead of starting from scratch.\n"
-            "After your reasoning, briefly summarize the key steps in several short sentences and then put your final answer within \\boxed{} tags. For example: \\boxed{42}.\n"
+            "After your reasoning, put your final answer within \\boxed{} tags. For example: \\boxed{42}.\n"
         )
         
         content = f"{question}\n\n{prompt_instruction}"

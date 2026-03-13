@@ -45,7 +45,7 @@ python3 -m verl.trainer.main_cgrpo \
     \
     data.filter_overlong_prompts=True \
     data.truncation='error' \
-    actor_rollout_ref.model.path=/root/autodl-tmp/models/Qwen3-0.6B \
+    actor_rollout_ref.model.path=/root/autodl-tmp/models/Qwen3.5-0.8B \
     actor_rollout_ref.actor.optim.lr=1e-6 \
     actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.ppo_mini_batch_size=32 \
@@ -72,9 +72,9 @@ python3 -m verl.trainer.main_cgrpo \
     \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb"]' \
-    trainer.project_name='verl_cgrpo_qwen3_0.6b_teacher_traces' \
-    trainer.experiment_name='verl_cgrpo_qwen3_0.6b_teacher_traces_3.5_4_opt' \
-    trainer.default_local_dir=checkpoints/verl_cgrpo_qwen3_0.6b_teacher_traces_3.5_4_opt \
+    trainer.project_name='verl_cgrpo_qwen3.5_0.8b_teacher_traces' \
+    trainer.experiment_name='verl_cgrpo_qwen3.5_0.8b_teacher_traces_3.6_1' \
+    trainer.default_local_dir=checkpoints/verl_cgrpo_qwen3.5_0.8b_teacher_traces_3.6_1 \
     trainer.n_gpus_per_node=1 \
     trainer.nnodes=1 \
     trainer.save_freq=60 \

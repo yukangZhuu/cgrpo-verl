@@ -39,6 +39,7 @@ class CurriculumConfig:
     early_stop_enabled: bool = True
     early_stop_threshold: float = 0.85
     early_stop_min_steps: int = 200
+    patience_delta: float = 0.0  # Minimum improvement to reset patience (Smart Patience)
 
 
 class CurriculumManager:
@@ -72,6 +73,9 @@ class CurriculumManager:
         self._should_stop = False
         self._steps_at_max_k = 0
         
+        # Smart Patience state
+        self.best_sr_ema_in_current_k = 0.0
+        
         logger.info(f"CurriculumManager initialized with k={self.k}, max_k={self.config.max_k}")
     
     def get_threshold(self) -> float:
@@ -79,11 +83,13 @@ class CurriculumManager:
         Calculate dynamic threshold based on current k.
         
         Threshold decreases as k increases to make progression easier.
+        The decay is relative to the initial_k, so threshold at initial_k is base_threshold.
         
         Returns:
             Current success rate threshold for advancement.
         """
-        threshold = self.config.base_threshold * (self.config.threshold_decay ** (self.k - 1))
+        relative_k = self.k - self.config.initial_k
+        threshold = self.config.base_threshold * (self.config.threshold_decay ** relative_k)
         return max(threshold, 0.5)
     
     def update(self, batch_success_rate: float, batch_size: int = 1) -> dict:
@@ -163,7 +169,20 @@ class CurriculumManager:
             )
             return True
         
-        self.patience_counter += 1
+        # Smart Patience Logic
+        if self.config.patience_delta > 0:
+            # Update best SR EMA
+            if self.sr_ema > self.best_sr_ema_in_current_k + self.config.patience_delta:
+                self.best_sr_ema_in_current_k = self.sr_ema
+                self.patience_counter = 0  # Reset patience as we are improving
+                return False
+            else:
+                # No significant improvement, consume patience
+                self.patience_counter += 1
+        else:
+            # Classic Patience Logic (always consume)
+            self.patience_counter += 1
+            
         if self.patience_counter >= self.config.patience:
             logger.info(
                 f"Curriculum advancing (patience exhausted): "
@@ -178,6 +197,7 @@ class CurriculumManager:
         self.k += 1
         self.patience_counter = 0
         self.steps_at_current_k = 0
+        self.best_sr_ema_in_current_k = 0.0 # Reset best SR EMA for new k
         logger.info(f"Curriculum advanced to k={self.k}")
     
     def _check_early_stop(self) -> bool:

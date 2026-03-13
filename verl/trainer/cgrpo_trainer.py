@@ -99,6 +99,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             device_name=device_name,
         )
         
+        # Initialize Profiler
+        from verl.utils.profiler import Profiler
+        self.profiler = Profiler()
+        
         curriculum_config = CurriculumConfig(
             initial_k=self.config.curriculum.get("initial_k", 1),
             max_k=self.config.curriculum.get("max_k", 10),
@@ -106,8 +110,12 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             base_threshold=self.config.curriculum.get("base_threshold", 0.9),
             threshold_decay=self.config.curriculum.get("threshold_decay", 0.95),
             patience=self.config.curriculum.get("patience", 1000),
+            patience_delta=self.config.curriculum.get("patience_delta", 0.0),
             min_steps_per_k=self.config.curriculum.get("min_steps_per_k", 100),
             warmup_steps=self.config.curriculum.get("warmup_steps", 0),
+            early_stop_enabled=self.config.curriculum.get("early_stop_enabled", True),
+            early_stop_threshold=self.config.curriculum.get("early_stop_threshold", 0.85),
+            early_stop_min_steps=self.config.curriculum.get("early_stop_min_steps", 200),
         )
         
         self.curriculum_manager = CurriculumManager(config=curriculum_config)
@@ -241,7 +249,9 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     interleave=True,
                 )
                 
-                gen_batch_output = self.async_rollout_manager.generate_sequences(gen_batch_output)
+                # Profile rollout time
+                with self.profiler.context_manager("rollout"):
+                    gen_batch_output = self.async_rollout_manager.generate_sequences(gen_batch_output)
                 
                 # [Verification] Log Point 2: Model Output
                 # if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
@@ -274,7 +284,9 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     from verl.trainer.ppo.ray_trainer import compute_response_mask
                     batch.batch["response_mask"] = compute_response_mask(batch)
                 
-                reward_tensor, reward_extra_info = self._compute_curriculum_reward(batch)
+                # Profile reward computation
+                with self.profiler.context_manager("reward_computation"):
+                    reward_tensor, reward_extra_info = self._compute_curriculum_reward(batch)
                 
                 # [Verification] Log Point 3: Reward
                 if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
@@ -322,7 +334,9 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 data_metrics = compute_data_metrics(batch=batch, use_critic=self.use_critic)
                 metrics.update(data_metrics)
                 
-                actor_output = self._update_actor(batch)
+                # Profile actor update
+                with self.profiler.context_manager("actor_update"):
+                    actor_output = self._update_actor(batch)
                 
                 # [Verification] Log Point 4: Update
                 # if self.config.trainer.test_freq > 0 and self.global_steps % self.config.trainer.test_freq == 0:
@@ -348,6 +362,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     "training/global_step": self.global_steps,
                     "training/epoch": epoch,
                 })
+                
+                # Collect timing metrics
+                timing_metrics = self.profiler.get_metrics()
+                metrics.update(timing_metrics)
                 
                 tracking.log(data=metrics, step=self.global_steps)
                 progress_bar.update(1)
