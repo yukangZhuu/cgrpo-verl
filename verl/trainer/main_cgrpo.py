@@ -105,8 +105,6 @@ class CurriculumTaskRunner:
             num_examine=config.reward_model.get("num_examine", 0),
             format_score=config.reward_model.get("format_score", 0.0),
             correct_score=config.reward_model.get("correct_score", 1.0),
-            answer_start=config.data.get("answer_start", "<answer>"),
-            answer_end=config.data.get("answer_end", "</answer>"),
         )
         
         train_dataset = CurriculumGRPODataset(

@@ -1,0 +1,4145 @@
+{
+  "summary": {
+    "total": 16559,
+    "format_match": 9960,
+    "format_mismatch": 6599,
+    "verified_match": 16542,
+    "verified_no_match": 17,
+    "method_counts": {
+      "exact_match": 10700,
+      "math_verify_full": 2890,
+      "latex_wrapped_match": 1993,
+      "regex_number_match": 667,
+      "numeric_match": 7,
+      "expr_match": 283,
+      "mcq_match": 2,
+      "no_match": 17
+    },
+    "potential_false_positive_count": 667
+  },
+  "mismatched_not_verified": [
+    {
+      "index": 2844,
+      "teacher_answer": "(1) $f(x)=\\frac{x}{1+2x^{2}}$; (2) $a_{n}=\\frac{1}{\\sqrt{2+2^{2-n}}}$",
+      "ground_truth": "a_{n}=\\sqrt{\\frac{2^{n-2}}{2^{n-1}+1}}",
+      "method": "no_match",
+      "question_preview": "Three. (20 points) Given $\\sin (2 \\alpha+\\beta)=3 \\sin \\beta$. Let $\\tan \\alpha=x, \\tan \\beta=y$, and denote $y=f(x)$.\n("
+    },
+    {
+      "index": 3193,
+      "teacher_answer": "(1) $\\frac{x^2}{3}+y^2=1$; (2) $\\frac{\\sqrt{3}}{2}$",
+      "ground_truth": "\\frac{\\sqrt{3}}{2}",
+      "method": "no_match",
+      "question_preview": "Example 5 Given the ellipse $C: \\frac{x^{2}}{a^{2}}+\\frac{y^{2}}{b^{2}}=1(a>b>0)$ has an eccentricity of $\\frac{\\sqrt{6}"
+    },
+    {
+      "index": 4182,
+      "teacher_answer": "(1) $2\\left(a + \\sqrt{a^2 - a + 1}\\right)$; (2) $\\frac{\\sqrt{3}}{2}$; (3) $\\frac{3\\sqrt{2}}{8}$",
+      "ground_truth": "\\frac{3}{8} \\sqrt{2}",
+      "method": "no_match",
+      "question_preview": "Let $l,\\ m$ be the tangent lines passing through the point $A(a,\\ a-1)$ on the line $y=x-1$ and touch the parabola $y=x^"
+    },
+    {
+      "index": 4683,
+      "teacher_answer": "(1) $a_n = 2n+1$; (2) $T_n = \\frac{n(3n+5)}{4(n+1)(n+2)}$",
+      "ground_truth": "\\frac{3}{4}-\\frac{2 n+3}{2(n+1)(n+2)}",
+      "method": "no_match",
+      "question_preview": "18. (15 points) Let $\\left\\{a_{n}\\right\\}$ be a sequence of positive numbers, and its first $n$ terms sum $S_{n}$ satisf"
+    },
+    {
+      "index": 5647,
+      "teacher_answer": "(1) $\\frac{x^2}{2}+y^2=1$; (2) $(x-1)^2+(y-2)^2=5$; (3) $\\sqrt{2}$",
+      "ground_truth": "\\sqrt{2}",
+      "method": "no_match",
+      "question_preview": "13. (20 points) Let the ellipse $\\frac{x^{2}}{a^{2}}+\\frac{y^{2}}{b^{2}}=1(a>b>0)$ pass through the point $P\\left(\\frac{"
+    },
+    {
+      "index": 6500,
+      "teacher_answer": "[\\arcsin\\left(\\frac{2}{3}\\right), \\frac{\\pi}{2}]",
+      "ground_truth": "\\left[\\arctan \\frac{2 \\sqrt{5}}{5}, \\frac{\\pi}{2}\\right]",
+      "method": "no_match",
+      "question_preview": "3. Given the equation $x^{2}+(b+2) x y+b y^{2}=0$ $(b \\in \\mathbf{R})$ represents two lines. Then the range of the angle"
+    },
+    {
+      "index": 8049,
+      "teacher_answer": "(1) $-\\frac{1}{\\sqrt{1-x^2}}$; (2) $\\frac{\\pi}{4}$; (3) $f(x)+f(\\sqrt{1-x^2})=\\frac{\\pi}{2}$",
+      "ground_truth": "\\frac{\\pi}{2}",
+      "method": "no_match",
+      "question_preview": "For $0<x<1,$ let $f(x)=\\int_0^x \\frac{dt}{\\sqrt{1-t^2}}\\ dt$\r\n\r\n(1) Find $\\frac{d}{dx} f(\\sqrt{1-x^2})$\r\n\r\n(2) Find $f\\l"
+    },
+    {
+      "index": 9115,
+      "teacher_answer": "(1) $2$; (2) $\\sqrt{2}-1$",
+      "ground_truth": "\\sqrt{2}-1",
+      "method": "no_match",
+      "question_preview": "14. Given $a, b, c \\in \\mathbf{R}_{+}$, satisfying $a b c(a+b+c)=1$.\n(1) Find the minimum value of $S=(a+c)(b+c)$;\n(2) W"
+    },
+    {
+      "index": 10038,
+      "teacher_answer": "(1) $x^2 - \\frac{y^2}{2} = 1$; (2) $y = x-2$ and $y = -x+2$",
+      "ground_truth": "x-2or-x+2",
+      "method": "no_match",
+      "question_preview": "12 Given the hyperbola $C: \\frac{x^{2}}{a^{2}}-\\frac{y^{2}}{b^{2}}=1(a>0, b>0)$ with eccentricity $e=\\sqrt{3}$, and the "
+    },
+    {
+      "index": 10072,
+      "teacher_answer": "(1) $y_n = \\frac{b}{a-b} \\cdot \\frac{a^n - b^n}{b^{n^2}}$; (2) $a$",
+      "ground_truth": "a",
+      "method": "no_match",
+      "question_preview": "1. Let $a, b$ be constants satisfying $a>b>0$, for the sequence $\\left\\{\\mathrm{x}_{\\mathrm{n}}\\right\\}$ defined by the "
+    },
+    {
+      "index": 12186,
+      "teacher_answer": "C2: $y(x-k)=-\\frac{k^2}{4}$, a hyperbola with center $(k,0)$ and asymptotes $x=k$, $y=0$; $\\theta=\\arctan\\frac{108}{145}$",
+      "ground_truth": "\\theta=\\arctan \\frac{108}{145}",
+      "method": "no_match",
+      "question_preview": "Four. (20 points) Let $k$ be a given non-zero real number, in the Cartesian coordinate system $x O y$, the equation of c"
+    },
+    {
+      "index": 13199,
+      "teacher_answer": "$\\left[\\frac{27}{4}, \\frac{268}{27}\\right]$",
+      "ground_truth": "[6\\frac{3}{4},9\\frac{25}{27}]",
+      "method": "no_match",
+      "question_preview": "9. (16 points) Given that $x$ is a real number. Find the range of the function\n$$\nf(x)=4 \\sin ^{3} x+\\sin ^{2} x-4 \\sin "
+    },
+    {
+      "index": 13438,
+      "teacher_answer": "(1) $2\\pi$; (2) $a=-1$, $b=4$",
+      "ground_truth": "-1,4",
+      "method": "no_match",
+      "question_preview": "Example 3 Given the function $f(x)=\\sin \\left(x+\\frac{\\pi}{6}\\right)+\\sin \\left(x-\\frac{\\pi}{6}\\right)+a \\cos x+b(a, b \\"
+    },
+    {
+      "index": 15864,
+      "teacher_answer": "0, $\\frac{\\sqrt{7}}{2}$",
+      "ground_truth": "\\frac{\\sqrt{7}}{2}",
+      "method": "no_match",
+      "question_preview": "Four. (20 points) Given points $A$ and $B$ are the upper and lower vertices of the ellipse $\\frac{y^{2}}{a^{2}}+\\frac{x^"
+    },
+    {
+      "index": 16754,
+      "teacher_answer": "[\\sqrt{2}+2, 8]",
+      "ground_truth": "[2+\\sqrt{2},8]",
+      "method": "no_match",
+      "question_preview": "8. The function\n$$\nf(x)=(\\sqrt{1+x}+\\sqrt{1-x}+2)\\left(\\sqrt{1-x^{2}}+1\\right)\n$$\n\nhas a range of $\\qquad$ ."
+    },
+    {
+      "index": 19638,
+      "teacher_answer": "(1) $g(x)=\\frac{(x-3)^2}{x-4}$; (2) $b=0$, intersection point $(3,0)$ and $b=4$, intersection point $(5,4)$; (3) $\\frac{9}{2}<x<6$",
+      "ground_truth": "\\frac{9}{2}<x<6",
+      "method": "no_match",
+      "question_preview": "(5) The graph of the function $f(x)=x+\\frac{1}{x}$ is $C_{1}, C_{1}$ is symmetric to the point $A(2,1)$, and the symmetr"
+    },
+    {
+      "index": 19972,
+      "teacher_answer": "(1) $k = \\frac{2}{5}$; (2) $k \\geq \\frac{2}{5}$; (3) $k \\leq \\frac{2}{5}$",
+      "ground_truth": "k\\leqslant\\frac{2}{5}",
+      "method": "no_match",
+      "question_preview": "(Example 2 Given the inequality about $x$: $k \\cdot 4^{x}-2^{x+1}+6 k<0$.\n(1) If the solution set of the inequality is $"
+    }
+  ],
+  "potential_false_positives": [
+    {
+      "index": 212,
+      "teacher_answer": "All pairs $(a,1)$ where $a$ is a positive integer.",
+      "ground_truth": "(a, 1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 226,
+      "teacher_answer": "[5; 4, 3, 3]",
+      "ground_truth": "[5,4,3,3]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 313,
+      "teacher_answer": "$(m, n) = (3k^2, k)$ for any positive integer $k$",
+      "ground_truth": "n = a, m = 3a^2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 369,
+      "teacher_answer": "√3/2",
+      "ground_truth": "\\frac{\\sqrt{3}}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 388,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 451,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 512,
+      "teacher_answer": "All nonnegative integers congruent to 0, 1, 4, or 7 modulo 9.",
+      "ground_truth": "\\{0, 1, 4, 7 \\} \\pmod{9}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 581,
+      "teacher_answer": "a=0, b any integer",
+      "ground_truth": "(a, b) = (0, b)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 620,
+      "teacher_answer": "\\((a,b,c,d) = (n, n+1, n+2, n+3)\\) for any integer \\(n\\)",
+      "ground_truth": "(a, b, c, d) = (n, n+1, n+2, n+3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 762,
+      "teacher_answer": "\\(-\\frac{3}{4}\\)",
+      "ground_truth": "\\frac{3}{4} \\text{ m/s}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 791,
+      "teacher_answer": "9√3/16",
+      "ground_truth": "\\frac{9\\sqrt{3}}{16}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 880,
+      "teacher_answer": "$(1,1,\\ldots,1)$",
+      "ground_truth": "(1, 1, \\ldots, 1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 936,
+      "teacher_answer": "\\binom{1950}{9}",
+      "ground_truth": "\\mathrm{C}_{1950}^{9}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1025,
+      "teacher_answer": "e > 2",
+      "ground_truth": "(2,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1103,
+      "teacher_answer": "Maximum: $\\frac{2}{3}$, Minimum: $-\\frac{2}{3}$",
+      "ground_truth": "-\\frac{2}{3} \\leqslant x \\leqslant \\frac{2}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1336,
+      "teacher_answer": "[-1,1]",
+      "ground_truth": "x \\in [-1, 1]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1388,
+      "teacher_answer": "√19 cm",
+      "ground_truth": "\\sqrt{19}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1391,
+      "teacher_answer": "{ n : n = p^2, p prime }",
+      "ground_truth": "\\{p^2 \\mid p \\text{ is a prime number}\\}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1479,
+      "teacher_answer": "a=2, b=1, c=1",
+      "ground_truth": "2,1,1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1634,
+      "teacher_answer": "\\left\\lfloor \\frac{n+2}{4} \\right\\rfloor",
+      "ground_truth": "\\left[\\frac{n+2}{4}\\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1716,
+      "teacher_answer": "√110",
+      "ground_truth": "\\sqrt{110}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1735,
+      "teacher_answer": "\\((-\\infty, 0] \\cup [4, +\\infty)\\)",
+      "ground_truth": "y \\leqslant 0 \\text{ or } y \\geqslant 4",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1737,
+      "teacher_answer": "(m, n) = (k, k+1) for any positive integer k",
+      "ground_truth": "(m, n) = (k, k+1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1740,
+      "teacher_answer": "$(m,n) = (p, p-1)$ for any odd prime $p$.",
+      "ground_truth": "(m, n) = (p, p-1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1783,
+      "teacher_answer": "\\(f(x) = k^2 x\\) for some positive integer \\(k\\)",
+      "ground_truth": "f(x) = k^2 x",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1957,
+      "teacher_answer": "\\( n = p^{2010} \\) where \\( p \\) is any prime.",
+      "ground_truth": "n=p^{2010}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 1973,
+      "teacher_answer": "[7/18, 5/6]",
+      "ground_truth": "\\left[ \\frac{7}{18}, \\frac{5}{6} \\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2130,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2184,
+      "teacher_answer": "\\(0 < \\lambda \\leq \\dfrac{5}{4}\\)",
+      "ground_truth": "\\left(0, \\frac{5}{4}\\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2186,
+      "teacher_answer": "For both (a) and (b), the minimal possible value is \\(-\\left\\lfloor \\frac{n}{2} \\right\\rfloor\\).",
+      "ground_truth": "-\\frac{n}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2248,
+      "teacher_answer": "(3,3,n) for all positive integers n",
+      "ground_truth": "(3, 3, n)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2274,
+      "teacher_answer": "[2, √13]",
+      "ground_truth": "[2, \\sqrt{13}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2278,
+      "teacher_answer": "\\(n = p^{2010}\\) where \\(p\\) is any prime.",
+      "ground_truth": "n = p^{2010}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2301,
+      "teacher_answer": "(7,1), (14,1), (35,1), (7,2), and (7a,7) for any positive integer a",
+      "ground_truth": "(x, y) = (7, 1), (14, 1), (35, 1), (7, 2), (7k, 7)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2332,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2375,
+      "teacher_answer": "\\(\\binom{n}{\\lfloor n/2 \\rfloor}\\)",
+      "ground_truth": "\\binom{2k}{k}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2465,
+      "teacher_answer": "[1/2, ∞)",
+      "ground_truth": "\\frac{1}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2505,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2529,
+      "teacher_answer": "f(x)=x^2",
+      "ground_truth": "f(y) = y^2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2545,
+      "teacher_answer": "\\left\\lfloor \\frac{p+3}{4} \\right\\rfloor",
+      "ground_truth": "[(p+3) / 4]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2708,
+      "teacher_answer": "(1, ∞)",
+      "ground_truth": "(1,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2739,
+      "teacher_answer": "\\max\\left(k, \\left\\lceil \\frac{n(k+1)}{2} \\right\\rceil\\right)",
+      "ground_truth": "\\left\\lceil n \\cdot \\frac{k+1}{2} \\right\\rceil",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2786,
+      "teacher_answer": "a = -1, b = 0; a = -3, b = 2; a = 5, b = 6",
+      "ground_truth": "(a, b) \\text{ are } (-1,0), (-3,2), (5,6)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 2998,
+      "teacher_answer": "\\lfloor n/2 \\rfloor",
+      "ground_truth": "\\left[\\frac{n}{2}\\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3016,
+      "teacher_answer": "f(x) = \\lg\\frac{2}{x-1}",
+      "ground_truth": "f(x)=\\lg 2-\\lg (x-1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3055,
+      "teacher_answer": "\\frac{3ab}{2}",
+      "ground_truth": "\\frac{3}{2} a b",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3176,
+      "teacher_answer": "-\\sqrt{3} \\le a \\le \\sqrt{3}",
+      "ground_truth": "[-\\sqrt{3}, \\sqrt{3}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3358,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3365,
+      "teacher_answer": "√19",
+      "ground_truth": "\\sqrt{19}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3499,
+      "teacher_answer": "f(x)=c for all x∈S, where c≥1",
+      "ground_truth": "f(x) = c \\text{ constant for all } x \\ge 1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3613,
+      "teacher_answer": "a y = 2 b x",
+      "ground_truth": "y= \\pm \\frac{2 b}{a} x",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3616,
+      "teacher_answer": "1 and 3",
+      "ground_truth": "(1)(3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3681,
+      "teacher_answer": "\\frac{2}{7} \\le a \\le \\frac{3}{7}",
+      "ground_truth": "\\left[ \\frac{2}{7}, \\frac{3}{7} \\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3689,
+      "teacher_answer": "e^{1/e}, e",
+      "ground_truth": "\\text{Max } a = e^{1/e} \\text{ and then limit is } e",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3707,
+      "teacher_answer": "f(x) = \\frac{C}{1-x^{2}}, where C is an arbitrary real constant.",
+      "ground_truth": "f(x) = \\frac{c}{1 - x^2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3729,
+      "teacher_answer": "$f(x)=ax^2$ where $a$ is any rational number.",
+      "ground_truth": "f(x) = ax^2 \\quad \\forall x \\in \\mathbb{Q}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3745,
+      "teacher_answer": "k = n, and if n is even, also k = n/2",
+      "ground_truth": "k \\geq \\frac{n}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3807,
+      "teacher_answer": "\\(P(x) = x^2 + bx + c\\) for any real numbers \\(b\\) and \\(c\\).",
+      "ground_truth": "P(x) = x^2 + bx + c",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 3812,
+      "teacher_answer": "[0, 3/2]",
+      "ground_truth": "0 \\leqslant d \\leqslant \\frac{3}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4043,
+      "teacher_answer": "\\left(\\frac{1}{n-1}\\right)^n",
+      "ground_truth": "\\frac{1}{(n-1)^n}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4190,
+      "teacher_answer": "arccos(4/5)",
+      "ground_truth": "\\arccos \\frac{4}{5}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4260,
+      "teacher_answer": "1,2,3",
+      "ground_truth": "(1)(2)(3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4365,
+      "teacher_answer": "[2; 3, 4, 2]",
+      "ground_truth": "[2,3,4,2]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4450,
+      "teacher_answer": "The minimum number of dominoes is $\\frac{2n}{3}$ if $n$ is divisible by $3$, and $2n$ otherwise.",
+      "ground_truth": "\\frac{2n}{3} \\text{ if } 3 \\mid n;~2n \\text{ otherwise}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4485,
+      "teacher_answer": "All natural numbers n such that n ≡ 1 (mod 3).",
+      "ground_truth": "n \\equiv 1 \\pmod{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4533,
+      "teacher_answer": "The intersection point of lines BC and DE, together with vertex A, gives a distance of √7.",
+      "ground_truth": "\\sqrt{7}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4632,
+      "teacher_answer": "R√3",
+      "ground_truth": "R\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4775,
+      "teacher_answer": "The maximum area is $\\frac{1}{4}$, achieved when $AM = DN$ (i.e., $M$ and $N$ are vertically aligned).",
+      "ground_truth": "\\frac{1}{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4813,
+      "teacher_answer": "(9, ∞)",
+      "ground_truth": "(9,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4853,
+      "teacher_answer": "(1), (2), (3)",
+      "ground_truth": "(1)(2)(3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4886,
+      "teacher_answer": "(0, 4/3]",
+      "ground_truth": "0 \\leqslant y \\leqslant \\frac{4}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 4916,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5005,
+      "teacher_answer": "(10,9,1), (10,2,1), (11,3,2)",
+      "ground_truth": "10,9,1 \\text{ or } 10,2,1 \\text{ or } 11,3,2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5039,
+      "teacher_answer": "S1 > 3S2",
+      "ground_truth": "S_{1}>3 S_{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5226,
+      "teacher_answer": "m = 1, x = 4, y = 2; m = 3, x = 2, y = 0",
+      "ground_truth": "m=1, (x,y)=(4,2); m=3, (x,y)=(2,0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5409,
+      "teacher_answer": "\\arctan(2), \\frac{a\\sqrt{5}}{5}",
+      "ground_truth": "\\alpha=\\operatorname{arctg} 2, \\frac{\\sqrt{5}}{5} a",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5437,
+      "teacher_answer": "(a,b,c) = (1,2c,c) and (2c,1,c) for all positive integers c.",
+      "ground_truth": "(a, b, c) = (1, 2c, c) \\text{ or } (2c, 1, c)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5465,
+      "teacher_answer": "\\frac{h(3-\\sqrt{5})}{2}",
+      "ground_truth": "\\frac{3-\\sqrt{5}}{2} h",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5563,
+      "teacher_answer": "1,2,...,2012",
+      "ground_truth": "1, 2, \\cdots, 2012",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5680,
+      "teacher_answer": "\\left\\lfloor\\frac{n^2}{4}\\right\\rfloor",
+      "ground_truth": "\\left[\\frac{n^{2}}{4}\\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5760,
+      "teacher_answer": "\\(d \\leq \\dfrac{a+b}{2}\\)",
+      "ground_truth": "d \\leqslant \\frac{a+b}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5810,
+      "teacher_answer": "\\frac{2t}{T} - \\left(\\frac{t}{T}\\right)^2",
+      "ground_truth": "\\frac{(2T-)}{T^2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5812,
+      "teacher_answer": "c = \\frac{1}{8}; equality holds if and only if all $x_i$ are zero or exactly two of them are equal and the rest are zero.",
+      "ground_truth": "\\frac{1}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5836,
+      "teacher_answer": "√5",
+      "ground_truth": "\\pm \\sqrt{5}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5963,
+      "teacher_answer": "(a,b)=(1,20),(20,1),(4,5),(5,4),(19,38),(38,19)",
+      "ground_truth": "(,b)=(1,20),(20,1),(4,5),(5,4),(19,38),(38,19)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 5998,
+      "teacher_answer": "1, 2, 4",
+      "ground_truth": "(1)(2)(4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6070,
+      "teacher_answer": "x = \\frac{a+b}{2}",
+      "ground_truth": "x^{\\prime}=\\frac{a+b}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6137,
+      "teacher_answer": "\\binom{1710}{300}",
+      "ground_truth": "C_{1710}^{300}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6146,
+      "teacher_answer": "p = 2 or p ≡ 3 (mod 4)",
+      "ground_truth": "2p\\equiv3(\\bmod4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6156,
+      "teacher_answer": "[-25,-24) ∪ (0,1]",
+      "ground_truth": "-25\\leqslant<-24or0<\\leqslant1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6175,
+      "teacher_answer": "(-1,0) ∪ (0,3)",
+      "ground_truth": "x\\in]-1,0[\\cup]0,3[",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6208,
+      "teacher_answer": "\\sqrt{\\frac{2k(n-k+1)}{n+1}}",
+      "ground_truth": "|x_{k}|_{\\max}=\\sqrt{\\frac{2k(n+1-k)}{n+1}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6261,
+      "teacher_answer": "\\sqrt{d^2 + m^2 + n^2 - 2mn\\cos\\theta}",
+      "ground_truth": "EF=\\sqrt{^{2}+^{2}+n^{2}\\2n\\cos\\theta}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6291,
+      "teacher_answer": "(-∞, -2)",
+      "ground_truth": "(-\\infty,-2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6340,
+      "teacher_answer": "y = \\frac{C_1 \\sin x + C_2 \\cos x}{x}",
+      "ground_truth": "C_{1}\\frac{\\cosx}{x}+C_{2}\\frac{\\sinx}{x}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6362,
+      "teacher_answer": "(5,2,7) and (5,13,18)",
+      "ground_truth": "(5,2,7)(5,13,18)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6384,
+      "teacher_answer": "100°, 160°",
+      "ground_truth": "100;160",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6385,
+      "teacher_answer": "The necessary and sufficient condition is that there exists a constant $k$ such that $a = k a_{1}$, $b = k b_{1}$, and $c = k c_{1}$. In generalized form, for polynomials $P(x)$ and $Q(x)$, $\\frac{P(x)}{Q(x)}$ is constant if and only if $P(x) = \\lambda Q(x)$ for some constant $\\lambda$.",
+      "ground_truth": "\\frac{}{a_{1}}=\\frac{b}{b_{1}}=\\frac{}{c_{1}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6465,
+      "teacher_answer": "ln 2",
+      "ground_truth": "\\ln2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6549,
+      "teacher_answer": "\\binom{2n}{n}",
+      "ground_truth": "(\\begin{pmatrix}2n\\\\n\\end{pmatrix})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6552,
+      "teacher_answer": "16 2/3%",
+      "ground_truth": "16\\frac{2}{3}\\%",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6554,
+      "teacher_answer": "1, 3, 4",
+      "ground_truth": "(1)(3)(4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6562,
+      "teacher_answer": "\\frac{1}{2} \\le x \\le 1",
+      "ground_truth": "[\\frac{1}{2};1]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6595,
+      "teacher_answer": "All integers from 0 to 45 inclusive.",
+      "ground_truth": "Anyintegervaluefrom0to45",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6610,
+      "teacher_answer": "4 times",
+      "ground_truth": "increased\\\\4\\times",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6642,
+      "teacher_answer": "$b+c \\in \\left[-\\frac{3}{2}, 3\\right]$",
+      "ground_truth": "-\\frac{3}{2}\\leqslantb+\\leqslant3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6701,
+      "teacher_answer": "\\(\\frac{6}{x} \\, (dx)^4\\)",
+      "ground_truth": "\\frac{6}{x}\\cdot()^{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6735,
+      "teacher_answer": "97: blue, 98: blue, 99: blue, 100: yellow",
+      "ground_truth": "97;98;99-Bluecolor,100-Yellowcolor",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6811,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6828,
+      "teacher_answer": "The series converges for $|x| \\le \\sqrt{3}$ and diverges for $|x| > \\sqrt{3}$.",
+      "ground_truth": "-\\sqrt{3}\\leqslantx\\leqslant\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6870,
+      "teacher_answer": "$a < -15$",
+      "ground_truth": "(-\\infty;-15)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6871,
+      "teacher_answer": "\\frac{(2n)!}{2^n \\cdot n!}",
+      "ground_truth": "(2n)!/2^{n}\\cdotn!",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6890,
+      "teacher_answer": "[1/8, ∞)",
+      "ground_truth": "[\\frac{1}{8},\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6910,
+      "teacher_answer": "[-1, 2]",
+      "ground_truth": "x\\in[-1,2]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6919,
+      "teacher_answer": "6 ≤ a+b+c < 4√3",
+      "ground_truth": "6\\leqk\\leq4\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6935,
+      "teacher_answer": "12 m and 16 m",
+      "ground_truth": "12\\mathrm{~},16\\mathrm{~}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6938,
+      "teacher_answer": "(-1, 5)",
+      "ground_truth": "-1<<5",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 6959,
+      "teacher_answer": "$a^3 + \\frac{3}{2}(a^2-b^2)(c-a)$",
+      "ground_truth": "^{3}+\\frac{3}{2}(^{2}-b^{2})(-)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7001,
+      "teacher_answer": "a \\geq -15",
+      "ground_truth": "[-15;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7040,
+      "teacher_answer": "Only for $a=7$ are there integer solutions, namely $x=2$ and $x=4$.",
+      "ground_truth": "7,2,4",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7041,
+      "teacher_answer": "1, 2, 3, 4",
+      "ground_truth": "(1)(2)(3)(4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7068,
+      "teacher_answer": "5; 199, 299, 399, 499, 599, 699, 799, 899, 999",
+      "ground_truth": "5,199,299,399,499,599,699,799,899,999",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7069,
+      "teacher_answer": "\\max(1,\\alpha)",
+      "ground_truth": "\\max \\{\\alpha, 1\\}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7079,
+      "teacher_answer": "$a \\in (-\\infty, -2) \\cup (0, \\frac{2}{3}) \\cup (\\frac{8}{7}, \\infty)$",
+      "ground_truth": "(-\\infty;-2)\\cup(0;\\frac{2}{3})\\cup(\\frac{8}{7};+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7153,
+      "teacher_answer": "\\((-\\infty, -4] \\cup (-3, 2) \\cup (2, 8]\\)",
+      "ground_truth": "x\\in(-\\infty;-4]\\cup(-3;2)\\cup(2;8]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7172,
+      "teacher_answer": "(x, y, z) = (t, -3t, 2t), t ∈ ℝ",
+      "ground_truth": "-3x,2x",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7192,
+      "teacher_answer": "√23",
+      "ground_truth": "\\sqrt{23}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7209,
+      "teacher_answer": "$\\frac{9\\pi}{14}; -\\frac{\\pi}{10}$",
+      "ground_truth": ")\\frac{9\\pi}{14};b)-\\frac{\\pi}{10}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7218,
+      "teacher_answer": "√5/2",
+      "ground_truth": "\\frac{\\sqrt{5}}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7219,
+      "teacher_answer": "2000, 3500, 6500",
+      "ground_truth": "Dragan:2000,Bobi:3500,Martin:6500",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7224,
+      "teacher_answer": "r < -\\sqrt{2} or r > \\sqrt{2}",
+      "ground_truth": "(-\\infty,-\\sqrt{2})\\cup(\\sqrt{2},+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7226,
+      "teacher_answer": "All positive integer solutions are the permutations of (2,4,15), (2,5,9), (2,6,7), (3,3,8), and (3,4,5).",
+      "ground_truth": "(2,4,15),(2,5,9),(2,6,7),(3,3,8),(3,4,5)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7233,
+      "teacher_answer": "k < 1",
+      "ground_truth": "k\\leq1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7243,
+      "teacher_answer": "\\( f(x) = x^2 + C \\), where \\( C \\) is any real constant.",
+      "ground_truth": "f(x)=x^{2}+",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7284,
+      "teacher_answer": "$c = \\frac{1}{8}$; equality holds if and only if all $x_i$ are zero or exactly two of them are nonzero and equal.",
+      "ground_truth": "\\frac{1}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7350,
+      "teacher_answer": "a ≥ 0",
+      "ground_truth": "\\geqslant0",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7380,
+      "teacher_answer": "\\((-\\infty, \\frac{17}{16}]\\)",
+      "ground_truth": "(-\\infty,\\frac{17}{16})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7400,
+      "teacher_answer": "$(1, p)$ for any prime $p$, and $(2,2)$, $(3,3)$",
+      "ground_truth": "(1,p),(2,2),(3,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7409,
+      "teacher_answer": "(-\\infty, -1) \\cup (3, \\infty)",
+      "ground_truth": "x\\in(-\\infty;-1)\\cup(3;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7450,
+      "teacher_answer": "0 and 2",
+      "ground_truth": "\\in{0,2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7462,
+      "teacher_answer": "4, 45°",
+      "ground_truth": "4;45",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7480,
+      "teacher_answer": "[1, 31/27]",
+      "ground_truth": "[1,\\frac{31}{27}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7495,
+      "teacher_answer": "√3/3",
+      "ground_truth": "\\frac{\\sqrt{3}}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7522,
+      "teacher_answer": "$(1,p)$ for any prime $p$, and $(2,2)$, $(3,3)$",
+      "ground_truth": "(1,p);(2,2);(3,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7549,
+      "teacher_answer": "(1,1), (2,4)",
+      "ground_truth": "(1,1)(2,4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7552,
+      "teacher_answer": "√5",
+      "ground_truth": "\\sqrt{5}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7560,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7585,
+      "teacher_answer": "The smallest constant is \\(c = \\frac{1}{8}\\). Equality holds if and only if all non-zero \\(x_i\\) are equal and there are at most two of them.",
+      "ground_truth": "\\frac{1}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7588,
+      "teacher_answer": "$f(x)=x^2+x+1$",
+      "ground_truth": "f(x)\\geqslantx^{2}+x+1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7600,
+      "teacher_answer": "\\frac{n s}{n-1}",
+      "ground_truth": "\\frac{n}{n-1}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7637,
+      "teacher_answer": "\\frac{\\pi}{2} < \\theta < \\frac{2\\pi}{3}",
+      "ground_truth": "\\theta\\in(\\frac{\\pi}{2},\\frac{2\\pi}{3})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7728,
+      "teacher_answer": "all real numbers except 3",
+      "ground_truth": "{y\\midy\\neq3,y\\in{R}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7831,
+      "teacher_answer": "2240_7",
+      "ground_truth": "(2240)_{7}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7839,
+      "teacher_answer": "a) x = 3; b) x = -2, x = 9; c) x = 6; d) x = -4",
+      "ground_truth": "3,-2,9,6,-4",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7849,
+      "teacher_answer": "\\arctan\\frac{\\sqrt{37}}{3}",
+      "ground_truth": "\\operatorname{arctg}\\frac{\\sqrt{37}}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7889,
+      "teacher_answer": "(-7, 1)",
+      "ground_truth": "\\in(-7;1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7917,
+      "teacher_answer": "\\frac{2ab}{a+b}",
+      "ground_truth": "\\frac{2ab}{+b}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7957,
+      "teacher_answer": "a ∈ (-∞, -2] ∪ [0, 1] ∪ [3, ∞)",
+      "ground_truth": "(-\\infty,-2] \\cup[0,1] \\cup[3, \\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 7961,
+      "teacher_answer": "\\dfrac{\\binom{2016}{1008}^2}{4^{2016}}",
+      "ground_truth": "\\frac{(\\mathrm{C}_{2016}^{1008})^{2}}{4^{2016}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8019,
+      "teacher_answer": "a = 8, b = 2, minimum value = 1976",
+      "ground_truth": "=8,b=2;1976",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8044,
+      "teacher_answer": "(3,5), (3,7), (5,5), (5,7)",
+      "ground_truth": "(,b)\\in{(3,5),(3,7),(5,5),(5,7)}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8082,
+      "teacher_answer": "30°, 60°, 90°",
+      "ground_truth": "30,60,90",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8102,
+      "teacher_answer": "(7; 10, 1949) and (7; 10, 1979)",
+      "ground_truth": "(7,10,1949)(7,10,1979)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8115,
+      "teacher_answer": "5832 cm³, 2744 cm³, 1728 cm³",
+      "ground_truth": "5832,2744,1728",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8180,
+      "teacher_answer": "(0,0) and (-1,0)",
+      "ground_truth": "(0,0)(-1,0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8184,
+      "teacher_answer": "\\binom{n}{\\lfloor n/2 \\rfloor}",
+      "ground_truth": "C_{n}^{[\\frac{n}{2}]}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8193,
+      "teacher_answer": "a ≥ √2",
+      "ground_truth": "a \\in [\\sqrt{2}, +\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8260,
+      "teacher_answer": "All pairs are of the form $(1, n)$ where $n$ is any natural number.",
+      "ground_truth": "(a, b) = (1, b)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8286,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8292,
+      "teacher_answer": "\\boxed{a \\geqslant -\\dfrac{17}{6}}",
+      "ground_truth": "-\\frac{17}{6}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8303,
+      "teacher_answer": "The solutions are $(n,m)=(1,1)$ and $(n,m)=(3,3)$.",
+      "ground_truth": "(1,1)(3,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8326,
+      "teacher_answer": "(0,1985) and (1985,0)",
+      "ground_truth": "(0,1985)(1985,0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8329,
+      "teacher_answer": "(4,5) ∪ (5, ∞)",
+      "ground_truth": "x\\in(4;5)\\cup(5;\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8335,
+      "teacher_answer": "\\frac{2m}{1+m^2}",
+      "ground_truth": "\\frac{2}{1+^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8346,
+      "teacher_answer": "30°, 40°, 110°",
+      "ground_truth": "30,40,110",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8360,
+      "teacher_answer": "(1, p) for all primes p, and (2,2), (3,3)",
+      "ground_truth": "(1,p)foranyp;(2,2);(3,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8362,
+      "teacher_answer": "1, 1",
+      "ground_truth": ")1;b)1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8363,
+      "teacher_answer": "a) 28 mm, b) 10 mm",
+      "ground_truth": "28\\mathrm{~},10\\mathrm{~}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8384,
+      "teacher_answer": "\\(\\frac{b+c}{1-bc}\\)",
+      "ground_truth": "\\frac{b+}{1-}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8426,
+      "teacher_answer": "(-1,0) ∪ (0,1)",
+      "ground_truth": "-1<<0or0<<1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8429,
+      "teacher_answer": "(1,0,2), (1,2,0)",
+      "ground_truth": "(1,0,2)(1,2,0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8452,
+      "teacher_answer": "$a > -1$ and $a \\neq -\\frac{2}{3}$",
+      "ground_truth": "\\in(-1,\\infty)\\setminus{-\\frac{2}{3}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8468,
+      "teacher_answer": "y(x) = \\frac{\\cosh x}{\\cosh 1}",
+      "ground_truth": "y(x)=\\frac{\\operatorname{ch}x}{\\operatorname{ch}1}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8472,
+      "teacher_answer": "\\frac{1}{n+1}\\binom{2n}{n}",
+      "ground_truth": "f_{n}=\\frac{1}{n+1}\\mathrm{C}_{2n}^{n}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8519,
+      "teacher_answer": "(-∞, -2] ∪ [2, ∞)",
+      "ground_truth": "x\\in(-\\infty;-2]\\cup[2;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8539,
+      "teacher_answer": "\\( b = \\frac{100a}{100 - a} \\)",
+      "ground_truth": "\\frac{100a}{100-}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8544,
+      "teacher_answer": "(1, 17), (2, 3)",
+      "ground_truth": "1,17or2,3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8587,
+      "teacher_answer": "\\frac{a}{\\sqrt{2}}",
+      "ground_truth": "\\frac{}{\\sqrt{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8588,
+      "teacher_answer": "a^2(2\\sqrt{3}-3)",
+      "ground_truth": "^{2}(2\\sqrt{3}-3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8613,
+      "teacher_answer": "\\(\\frac{c^3}{4S}\\)",
+      "ground_truth": "\\frac{^3}{4S}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8626,
+      "teacher_answer": "\\(a = -\\frac{1}{2}\\) or \\(a > 0\\)",
+      "ground_truth": "\\left\\{-\\frac{1}{2}\\right\\} \\cup(0,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8729,
+      "teacher_answer": "\\(\\frac{abS}{4(a+b)}\\)",
+      "ground_truth": "\\frac{aS}{4(+b)}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8827,
+      "teacher_answer": "x = \\frac{b+c}{2},\\quad y = \\frac{c+a}{2},\\quad z = \\frac{a+b}{2}",
+      "ground_truth": "x=\\frac{b+}{2},y=\\frac{+}{2},z=\\frac{+b}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8841,
+      "teacher_answer": "(-√7/2, 7]",
+      "ground_truth": "(-\\frac{\\sqrt{7}}{2},7]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8849,
+      "teacher_answer": "$\\left[-7, -\\frac{8}{3}\\right) \\cup (0, 2)$",
+      "ground_truth": "x\\in[-7;-\\frac{8}{3})\\cup(0;2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8861,
+      "teacher_answer": "(-\\infty, -1] \\cup [1, \\infty)",
+      "ground_truth": "k\\leqslant-1ork\\geqslant1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8882,
+      "teacher_answer": "a = -4; roots: 2, 3, 4, 7",
+      "ground_truth": "a=-4, x=2,3,4,7",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8956,
+      "teacher_answer": "$(-1, \\sqrt{2}]$",
+      "ground_truth": "(-1;\\sqrt{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8982,
+      "teacher_answer": "\\frac{5}{9} < p \\le 1 \\text{ or } p \\ge 6",
+      "ground_truth": "\\frac{5}{9}<p\\leq1orp\\geq6",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 8984,
+      "teacher_answer": "\\(\\sqrt{a^2+(b+c)^2}\\)",
+      "ground_truth": "\\sqrt{^{2}+(b+)^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9039,
+      "teacher_answer": "1152\n920\n115\n96",
+      "ground_truth": "1152,920,115,96",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9043,
+      "teacher_answer": "$\\sqrt{2} + \\sqrt{2}i$",
+      "ground_truth": "\\sqrt{2}+\\sqrt{2}\\mathrm{i}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9062,
+      "teacher_answer": "(0, \\sqrt{d^2 - r^2})",
+      "ground_truth": "(0, \\pm \\sqrt{d^{2}-r^{2}})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9065,
+      "teacher_answer": "(46,51) and (47,52)",
+      "ground_truth": "(46,51)(47,52)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9077,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9093,
+      "teacher_answer": "\\frac{a(2b-a)}{2\\sqrt{3b^2-a^2}}",
+      "ground_truth": "\\frac{(2)}{2\\sqrt{3b^{2}-^{2}}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9099,
+      "teacher_answer": "-1 < x < 1",
+      "ground_truth": "x\\in\\langle-1,1\\rangle",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9123,
+      "teacher_answer": "\\(a^2 - ab + b^2 < 3c\\)",
+      "ground_truth": "^{2}-+b^{2}<3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9135,
+      "teacher_answer": "a \\in (-1, 1] \\cup \\{5\\}",
+      "ground_truth": "\\in(-1;1]\\cup{5}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9156,
+      "teacher_answer": "$p(x) = Ax + Bx^2$ for any real numbers $A$ and $B$.",
+      "ground_truth": "p(x) = \\lambda x^2 + \\mu x",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9179,
+      "teacher_answer": "(1,-1), (-1,1)",
+      "ground_truth": "(x, y)=(1,-1) \\text { and }(x, y)=(-1,1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9185,
+      "teacher_answer": "(2,3,7) and (3,2,7)",
+      "ground_truth": "p=2,q=3,n=7p=3,q=2,n=7",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9199,
+      "teacher_answer": "\\frac{c^2}{8}",
+      "ground_truth": "\\frac{^{2}}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9222,
+      "teacher_answer": "e^{16}",
+      "ground_truth": "\\mathrm{e}^{16}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9232,
+      "teacher_answer": "\\left[-\\frac{\\sqrt{5}}{5},\\frac{\\sqrt{5}}{5}\\right]",
+      "ground_truth": "[-\\frac{\\sqrt{5}}{5},\\frac{\\sqrt{5}}{5}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9242,
+      "teacher_answer": "2^{1000}, 5^{500}, 3^{750}",
+      "ground_truth": "2^{1000}<5^{500}<3^{750}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9285,
+      "teacher_answer": "-5, 0, 1",
+      "ground_truth": "\\in{-5,0,1}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9314,
+      "teacher_answer": "30°, 60°, 90°",
+      "ground_truth": "30,60,90",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9351,
+      "teacher_answer": "(-∞, 1) ∪ (3, ∞)",
+      "ground_truth": "\\in(-\\infty,1)\\cup(3,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9374,
+      "teacher_answer": "a) (-x, -y); b) (2a-x, 2b-y)",
+      "ground_truth": ")(-x;-y);b)(2-x;2b-y)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9378,
+      "teacher_answer": "21 and 37",
+      "ground_truth": "21\\cdot37",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9386,
+      "teacher_answer": "arccos(2/3)",
+      "ground_truth": "\\arccos\\frac{2}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9408,
+      "teacher_answer": "$\\left[ -\\frac{3}{2}, -1 \\right) \\cup \\left( 2, \\frac{5}{2} \\right]$",
+      "ground_truth": "[-\\frac{3}{2},-1)\\cup(2,\\frac{5}{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9493,
+      "teacher_answer": "4 ≤ x ≤ 9",
+      "ground_truth": "[4,9]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9523,
+      "teacher_answer": "1375 one-fen coins, 825 two-fen coins, 495 five-fen coins, 290 ten-fen coins",
+      "ground_truth": "1375,825,495,290",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9534,
+      "teacher_answer": "Surface area ratio: \\(\\frac{\\pi}{2}\\), Volume ratio: \\(\\frac{\\pi\\sqrt{3}}{2}\\)",
+      "ground_truth": "\\pi:2;\\pi\\sqrt{3}:2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9557,
+      "teacher_answer": "The radius of the base is \\(\\sqrt{2}R\\) and the height is \\(4R\\).",
+      "ground_truth": "r=R\\sqrt{2},H=4R",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9578,
+      "teacher_answer": "15, 2, woman, man",
+      "ground_truth": ")15,b)2,)Firstperson:,Lastperson:",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9642,
+      "teacher_answer": "15, 12, 8 or 5, 12, 18",
+      "ground_truth": "15,12,8\\quad\\quad5,12,18",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9654,
+      "teacher_answer": "All permutations of (2,3,5,31)",
+      "ground_truth": "(2;3;5;31)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9736,
+      "teacher_answer": "\\frac{\\sqrt{3}}{24}a^{3}",
+      "ground_truth": "\\frac{\\sqrt{3}}{24}^{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9741,
+      "teacher_answer": "[0,3) ∪ (3,4)",
+      "ground_truth": "x\\in[0;3)\\cup(3;4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9758,
+      "teacher_answer": "\\(P(x) = C \\cdot x (x-1) (x+1) (x+2) (x^2+x+1)\\) for any constant \\(C \\in \\mathbb{R}\\)",
+      "ground_truth": "P(x)=(x-1)x(x+1)(x+2)(x^2+x+1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9812,
+      "teacher_answer": "\\frac{2\\pi a}{(a^2 - b^2)^{3/2}}",
+      "ground_truth": "\\frac{2\\pi}{(^{2}-b^{2})^{3/2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9821,
+      "teacher_answer": "∠A = 120°, ∠B = 100°, ∠C = 60°, ∠D = 80°",
+      "ground_truth": "120,100,60,80",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9874,
+      "teacher_answer": "\\(2 - \\sqrt{6} < x \\le \\dfrac{5 - \\sqrt{17}}{2}\\)",
+      "ground_truth": "(2-\\sqrt{6},\\frac{5-\\sqrt{17}}{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9882,
+      "teacher_answer": "\\frac{5a}{12}",
+      "ground_truth": "\\frac{5}{12}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9896,
+      "teacher_answer": "-2 < b < 1",
+      "ground_truth": "(-2;1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9975,
+      "teacher_answer": "\\frac{\\sqrt{a^2+b^2}}{2}",
+      "ground_truth": "\\frac{\\sqrt{^{2}+b^{2}}}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9982,
+      "teacher_answer": "\\frac{\\sqrt{3}}{12}(a^3-b^3)",
+      "ground_truth": "\\frac{\\sqrt{3}}{12}(^{3}-b^{3})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 9989,
+      "teacher_answer": "\\left\\lfloor \\frac{n^2}{4} \\right\\rfloor",
+      "ground_truth": "[n^{2}/4]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10033,
+      "teacher_answer": "5, 10, √17",
+      "ground_truth": "5,10,\\sqrt{17}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10039,
+      "teacher_answer": "(4,9,3) and (8,15,4)",
+      "ground_truth": "(4,9,3)(8,15,4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10042,
+      "teacher_answer": "\\(a < 0\\)",
+      "ground_truth": "<0",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10070,
+      "teacher_answer": "-\\arctan 2",
+      "ground_truth": "-\\operatorname{arctg}2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10076,
+      "teacher_answer": "Angle = \\arccos\\left(\\frac{5}{\\sqrt{861}}\\right), distance = \\frac{20}{\\sqrt{209}}",
+      "ground_truth": "\\arccos\\frac{5}{\\sqrt{861}},\\frac{20}{\\sqrt{209}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10090,
+      "teacher_answer": "[-2020, 2020/3]",
+      "ground_truth": "[-2020,\\frac{2020}{3}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10091,
+      "teacher_answer": "a) $\\frac{1}{8}$; b) $9$; c) $\\frac{81}{16}$; d) $-125$",
+      "ground_truth": "\\frac{1}{8},9,\\frac{81}{16},-125",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10098,
+      "teacher_answer": "[-2, 6] and [π/3, 2π/3]",
+      "ground_truth": "[-2,6],\\left[\\frac{\\pi}{3}, \\frac{2 \\pi}{3}\\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10180,
+      "teacher_answer": "\\lambda \\geq 4",
+      "ground_truth": "[4,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10183,
+      "teacher_answer": "AB = AC = √(2k/sin θ)",
+      "ground_truth": "\\sqrt{\\frac{2k}{\\sin\\theta}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10211,
+      "teacher_answer": "R*(√5-1)/2",
+      "ground_truth": "\\frac{\\sqrt{5}-1}{2}R",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10222,
+      "teacher_answer": "\\left( \\frac{2\\pi}{3}, \\pi \\right]",
+      "ground_truth": "\\frac{2\\pi}{3}<\\leq\\pi",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10262,
+      "teacher_answer": "a \\leq -\\frac{1}{4} \\text{ or } a \\geq 1",
+      "ground_truth": "a \\in\\left(-\\infty,-\\frac{1}{4}\\right] \\cup[1,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10268,
+      "teacher_answer": "There are sixteen such triples, namely $(2,2,2)$, the three permutations of $(2,2,3)$, and the six permutations of each of $(2,6,11)$ and $(3,5,7)$.",
+      "ground_truth": "(2,2,2), (2,2,3), (2,6,11), (3,5,7)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10323,
+      "teacher_answer": "673+674+675; 504+505+506+507; 163+164+...+174",
+      "ground_truth": "673+674+675;\\quad504+505+506+507;\\quad163+164+\\ldots+174",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10350,
+      "teacher_answer": "\\pi (p-c)^2",
+      "ground_truth": "\\pi(p-)^{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10352,
+      "teacher_answer": "∠A = 60°, ∠B = 60°, ∠C = 60°",
+      "ground_truth": "60,60,60",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10399,
+      "teacher_answer": "Maximum: 3, Minimum: 1",
+      "ground_truth": "3,1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10444,
+      "teacher_answer": "(-5, -4]",
+      "ground_truth": "-5<\\leqslant-4",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10453,
+      "teacher_answer": "30°, 30°, 120°",
+      "ground_truth": "30,30,120",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10526,
+      "teacher_answer": "\\boxed{\\left\\lfloor \\dfrac{n^2}{4} \\right\\rfloor}",
+      "ground_truth": "[\\frac{n^{2}}{4}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10573,
+      "teacher_answer": "√7",
+      "ground_truth": "\\sqrt{7}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10652,
+      "teacher_answer": "\\frac{a^3(\\sqrt{2}-1)}{8}",
+      "ground_truth": "\\frac{^3(\\sqrt{2}-1)}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10659,
+      "teacher_answer": "\\( w = \\frac{z - z_1}{z - z_2} \\)",
+      "ground_truth": "K\\frac{z-z_{1}}{z-z_{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10692,
+      "teacher_answer": "(1,1) and (2,4)",
+      "ground_truth": "(1,1)(2,4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10695,
+      "teacher_answer": "y = \\lg(2x-2)",
+      "ground_truth": "\\lg(2x-2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10714,
+      "teacher_answer": "1 < x ≤ 3",
+      "ground_truth": "(1,3]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10724,
+      "teacher_answer": "\\lfloor 3n/2 \\rfloor",
+      "ground_truth": "[\\frac{3n}{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10802,
+      "teacher_answer": "All nonnegative integers congruent to 0, 1, 4, or 7 modulo 9.",
+      "ground_truth": "any\\non-negative\\integer\\=0,1,4\\or\\7\\\\bmod\\9",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10836,
+      "teacher_answer": "A=3, B=6, C=8 or A=8, B=7, C=2",
+      "ground_truth": "(A,B,C)\\in{(3,6,8),(8,7,2)}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10863,
+      "teacher_answer": "\\left\\lfloor \\dfrac{n^2}{4} \\right\\rfloor",
+      "ground_truth": "[\\frac{n^{2}}{4}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10885,
+      "teacher_answer": "(4,0)",
+      "ground_truth": "P(4,0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10976,
+      "teacher_answer": "\\frac{4}{3}\\vec{b} - \\frac{1}{3}\\vec{a}",
+      "ground_truth": "\\frac{4}{3}\\vec{b}-\\frac{1}{3}\\vec{}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 10978,
+      "teacher_answer": "x=0, y=±√(3/2)",
+      "ground_truth": "(0;\\\\sqrt{\\frac{3}{2}})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11024,
+      "teacher_answer": "\\dfrac{a^2\\sqrt{2}}{4}",
+      "ground_truth": "\\frac{^2\\sqrt{2}}{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11046,
+      "teacher_answer": "$\\arcsin \\cos \\arcsin x + \\arccos \\sin \\arccos x = \\frac{\\pi}{2}$",
+      "ground_truth": "\\alpha+\\beta=\\frac{\\pi}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11076,
+      "teacher_answer": "(2, -4) and (-1, -9)",
+      "ground_truth": "M(2,-4),N(-1,-9)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11083,
+      "teacher_answer": "-\\frac{1}{4} < a \\leq \\frac{3}{4}",
+      "ground_truth": "(-\\frac{1}{4},\\frac{3}{4})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11098,
+      "teacher_answer": "\\frac{ab}{2}",
+      "ground_truth": "\\frac{}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11100,
+      "teacher_answer": "\\dfrac{a^2 \\sin B \\sin C}{2 \\sin(B+C)}",
+      "ground_truth": "^{2}\\sin\\beta\\sin\\gamma/2\\sin(\\beta+\\gamma)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11115,
+      "teacher_answer": "BE is longer than DF; the range of |BE−DF| is (0, 1/4].",
+      "ground_truth": "\\left(0, \\frac{1}{4}\\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11135,
+      "teacher_answer": "z = iy, where y ∈ ℝ, y ≤ 0 or y ≥ 5.",
+      "ground_truth": ",with\\in(-\\infty,0]\\cup[5,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11147,
+      "teacher_answer": "$(m, n) = (t, -t)$ for any integer $t$, and $(0,1), (1,0), (1,2), (2,1), (2,2)$",
+      "ground_truth": "{(,-)\\mid\\in\\mathbb{Z}}\\cup{(0,1),(1,0),(1,2),(2,1),(2,2)}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11168,
+      "teacher_answer": "$\\left(a^{\\frac{4}{7}}+b^{\\frac{4}{7}}\\right)^{\\frac{7}{4}}$",
+      "ground_truth": "(^{\\frac{4}{7}}+b^{\\frac{4}{7}})^{\\frac{7}{4}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11178,
+      "teacher_answer": "\\sqrt{2} : 1",
+      "ground_truth": "b:=\\sqrt{2}:1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11192,
+      "teacher_answer": "21 yuan 5 jiao",
+      "ground_truth": "21,5",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11200,
+      "teacher_answer": "Q(2+√3, 2-√3), R(2-√3, 2+√3)",
+      "ground_truth": "(2-\\sqrt{3},2+\\sqrt{3}),(2+\\sqrt{3},2-\\sqrt{3})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11228,
+      "teacher_answer": "(4; 0; 0)",
+      "ground_truth": "A(4;0;0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11245,
+      "teacher_answer": "24, 20, 18; -24, -20, -18; 2",
+      "ground_truth": "24,20,18,-24,-20,-18,2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11251,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11257,
+      "teacher_answer": "\\(a \\leqslant -2\\)",
+      "ground_truth": "\\leqslant-2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11267,
+      "teacher_answer": "\\(-\\frac{1}{4} \\le a \\le \\frac{3}{4}\\)",
+      "ground_truth": "\\left[-\\frac{1}{4}, \\frac{3}{4}\\right]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11307,
+      "teacher_answer": "19; 14, 21, 22",
+      "ground_truth": "19,14,21,22",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11323,
+      "teacher_answer": "a) x = 25; b) y = 50; c) v = 40; d) w = 80",
+      "ground_truth": "25,50,40,80",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11338,
+      "teacher_answer": "(1,1), (16,2), (27,3)",
+      "ground_truth": "(,b)=(1,1),(16,2),(27,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11387,
+      "teacher_answer": "(3,4)",
+      "ground_truth": "(,b)=(3,4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11403,
+      "teacher_answer": "\\boxed{\\pm \\frac{1}{\\sqrt{2}}}",
+      "ground_truth": "xy=\\\\frac{1}{\\sqrt{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11438,
+      "teacher_answer": "[4, 4√2]",
+      "ground_truth": "[4,4\\sqrt{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11461,
+      "teacher_answer": "[0.5, 4]",
+      "ground_truth": "x\\in[0.5;4]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11469,
+      "teacher_answer": "For part (a): \\( b = -8,\\ c = 12 \\). For part (b): \\( b = -3,\\ c = 2 \\) or \\( b = 1,\\ c = 0 \\).",
+      "ground_truth": "(b,)=(-8,12)or(b,)=(-3,2)or(b,)=(1,0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11540,
+      "teacher_answer": "$x \\geq 3$",
+      "ground_truth": "allnaturalx,notthan3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11556,
+      "teacher_answer": "\\(\\sin\\theta = \\frac{\\sin\\alpha}{k-\\sin\\alpha}\\); \\(k > 2\\sin\\alpha\\)",
+      "ground_truth": "\\frac{\\sin\\alpha}{k-\\sin\\alpha};k>2\\sin\\alpha",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11573,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11637,
+      "teacher_answer": "$\\alpha \\in [45^\\circ, 60^\\circ]$ and $\\beta \\in [30^\\circ, 45^\\circ]$",
+      "ground_truth": "\\alpha\\in[45,60],\\beta\\in[30,45]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11706,
+      "teacher_answer": "$x = \\frac{n\\pi}{6},\\ n \\in \\mathbb{Z}$",
+      "ground_truth": "\\frac{\\pin}{6},n\\inZ",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11723,
+      "teacher_answer": "(2,3,-1), (-2,-3,1)",
+      "ground_truth": "2,3,-1or-2,-3,1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11727,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11742,
+      "teacher_answer": "all integers except 1",
+      "ground_truth": "p\\midp\\inN,p\\neq1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11815,
+      "teacher_answer": "$-6054 \\le m \\le -2017$",
+      "ground_truth": "\\in[-6054;-2017]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11858,
+      "teacher_answer": "(0, 1/64) ∪ (4, ∞)",
+      "ground_truth": "x\\in(0;\\frac{1}{64})\\cup(4;\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11883,
+      "teacher_answer": "(1,1), (2,4), (3,7)",
+      "ground_truth": "k=1,n=1;k=2,n=4;k=3,n=7",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11916,
+      "teacher_answer": "\\pm\\sqrt{3}",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11940,
+      "teacher_answer": "(2,7), (-8,-3), (-34,-29), (18,23)",
+      "ground_truth": "P(2,7),P(-8,-3),P(-34,-29),P(18,23)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11944,
+      "teacher_answer": "(-∞, -7) ∪ (-7, -2] ∪ (1, 7) ∪ (7, 8] ∪ (11, ∞)",
+      "ground_truth": "x\\in(-\\infty;-7)\\cup(-7;-2]\\cup(1;7)\\cup(7;8]\\cup(11;\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 11970,
+      "teacher_answer": "\\frac{6 \\pm \\sqrt{14}}{2}",
+      "ground_truth": "{\\frac{6\\\\sqrt{14}}{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12036,
+      "teacher_answer": "Smallest: 12.5%, Largest: 15%",
+      "ground_truth": "12.5to15",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12043,
+      "teacher_answer": "(11, 19), (-11, -19)",
+      "ground_truth": "11,19-11,-19",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12061,
+      "teacher_answer": "\\(\\frac{b}{a}\\sqrt{a^2+b^2}\\)",
+      "ground_truth": "\\frac{b\\cdot\\sqrt{^{2}+b^{2}}}{}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12072,
+      "teacher_answer": "$(x-a)^2+(y-b)^2+(z-c)^2=R^2$",
+      "ground_truth": "(x-)^{2}+(y-b)^{2}+(z-)^{2}=R^{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12134,
+      "teacher_answer": "a) The area of Q is smaller than the area of K; it is 78.5% of the area of K. b) The perimeter of q is larger than the perimeter of k; it is 112.8% of the perimeter of k.",
+      "ground_truth": "78.5,112.8",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12172,
+      "teacher_answer": "f(x)=x+1",
+      "ground_truth": "f:\\mapsto+1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12175,
+      "teacher_answer": "Tangent: \\(y = 2x - e\\), Normal: \\(y = -\\frac{1}{2}x + \\frac{3e}{2}\\)",
+      "ground_truth": "():2x-e,(n):-\\frac{1}{2}x+\\frac{3}{2}e",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12416,
+      "teacher_answer": "(-2, 0) ∪ (0, 1)",
+      "ground_truth": "x\\in(-2;0)\\cup(0;1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12451,
+      "teacher_answer": "All positive integers $n$ such that $n+1$ is prime.",
+      "ground_truth": "all\\n\\such\\that\\n+1\\is\\",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12498,
+      "teacher_answer": "(x, y) = (n, n^2+3n+1) for any positive integer n",
+      "ground_truth": "x^{2}+3x+1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12503,
+      "teacher_answer": "\\(\\binom{n}{k}\\binom{n-1}{k}\\)",
+      "ground_truth": "C_{n}^{k}\\cdotC_{n-1}^{k}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12510,
+      "teacher_answer": "√29 m",
+      "ground_truth": "\\sqrt{29}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12531,
+      "teacher_answer": "The integer solutions are (3,3,-4), (3,-4,3), and (-4,3,3).",
+      "ground_truth": "(3,3,-4),(3,-4,3),(-4,3,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12547,
+      "teacher_answer": "a ≤ -1 or a ≥ 5",
+      "ground_truth": "\\in(-\\infty;-1]\\cup[5;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12559,
+      "teacher_answer": "p > 1 - \\sqrt{2}",
+      "ground_truth": "(1-\\sqrt{2},+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12585,
+      "teacher_answer": "(-21, 0, 0)",
+      "ground_truth": "A(-21;0;0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12624,
+      "teacher_answer": "a ≥ 6",
+      "ground_truth": "\\geq6",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12661,
+      "teacher_answer": "(2,5) and (5,2)",
+      "ground_truth": "(2,5)(5,2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12665,
+      "teacher_answer": "(2,1,3), (3,3,2)",
+      "ground_truth": "(2,1,3)(3,3,2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12669,
+      "teacher_answer": "$\\left[\\frac{19}{2}, +\\infty\\right)$",
+      "ground_truth": "\\in[\\frac{19}{2};+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12691,
+      "teacher_answer": "m^{1989} - m^{663} - m^{153} - m^{117} + m^{51} + m^{39} + m^{9} - m^{3}",
+      "ground_truth": "^{1989}-^{663}-^{153}-^{117}+^{51}+^{39}+^{9}-^{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12692,
+      "teacher_answer": "a ≤ 1",
+      "ground_truth": "\\leq1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12697,
+      "teacher_answer": "9 cm, 9√3 cm, 18 cm",
+      "ground_truth": "9,9\\sqrt{3},18",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12710,
+      "teacher_answer": "f(n)=1, f(n)=2, f(n)=n",
+      "ground_truth": "f\\equiv1,f\\equiv2,f(n)=n",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12711,
+      "teacher_answer": "$\\frac{\\pi}{2}+2\\pi n, \\frac{3\\pi}{4}+2\\pi n, \\pi+2\\pi n, n \\in \\mathbb{Z}$",
+      "ground_truth": "\\frac{\\pi}{2}+2\\pin,\\frac{3\\pi}{4}+2\\pin,\\pi+2\\pin,n\\inZ",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12732,
+      "teacher_answer": "Zoran: 600 denars, Goran: 900 denars, Ruza: 500 denars",
+      "ground_truth": "600,900,500",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12747,
+      "teacher_answer": "$\\frac{e^x \\sqrt{\\arctan(e^x)}}{1+e^{2x}}$",
+      "ground_truth": "\\frac{e^{x}\\cdot\\sqrt{\\operatorname{arctg}e^{x}}}{1+e^{2x}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12755,
+      "teacher_answer": "(2,1)",
+      "ground_truth": "(,b)=(2,1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12761,
+      "teacher_answer": "x ≤ 1000",
+      "ground_truth": "x\\in(-\\infty,1000]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12806,
+      "teacher_answer": "(0, 3, 0)",
+      "ground_truth": "A(0;3;0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12812,
+      "teacher_answer": "-\\frac{27}{4}",
+      "ground_truth": "\\frac{27}{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12821,
+      "teacher_answer": "√3 : 4 : 6√3",
+      "ground_truth": "\\sqrt{3}:4:6\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12858,
+      "teacher_answer": "2 < x < 32",
+      "ground_truth": "x\\in(2;32)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12871,
+      "teacher_answer": "(0,0), (0,1), (2,5), (7,6)",
+      "ground_truth": "(0;0),(0;1),(2;5),(7;6)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12878,
+      "teacher_answer": "\\frac{b^2 - a^2}{2}",
+      "ground_truth": "(b^{2}-^{2})/2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12884,
+      "teacher_answer": "k ≥ 3",
+      "ground_truth": "[3,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12895,
+      "teacher_answer": "\\((x, y) = (t(t+1), 3t+1)\\) for any integer \\(t\\)",
+      "ground_truth": "(k(k+1),3k+1),k\\in{Z}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12904,
+      "teacher_answer": "Diagonal length: \\(5\\), Area: \\(\\frac{975\\sqrt{3}}{196}\\)",
+      "ground_truth": "5;\\frac{975\\sqrt{3}}{196}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12936,
+      "teacher_answer": "\\frac{2(p+1)}{3}",
+      "ground_truth": "\\frac{2(n+1)}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 12964,
+      "teacher_answer": "\\(r \\geq \\frac{1}{2}\\)",
+      "ground_truth": "r\\geqq\\frac{1}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13010,
+      "teacher_answer": "$x = \\frac{\\pi}{2} + k\\pi,\\; y = n\\pi,\\; z = 2p\\pi$ where $k, n, p \\in \\mathbb{Z}$",
+      "ground_truth": "\\frac{\\pi}{2}+\\pi,\\pik,2\\pi,",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13039,
+      "teacher_answer": "90°, 90°, α",
+      "ground_truth": "\\alpha,90,90",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13063,
+      "teacher_answer": "∠A = 45°, ∠B = 45°, ∠C = 90°",
+      "ground_truth": "45,45,90",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13081,
+      "teacher_answer": "\\left\\lfloor\\frac{n}{2}\\right\\rfloor",
+      "ground_truth": "[\\frac{n}{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13134,
+      "teacher_answer": "\\(\\frac{1}{9(1+\\cosh^2 x)}\\)",
+      "ground_truth": "\\frac{1}{9\\cdot(1+\\operatorname{ch}^{2}x)}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13144,
+      "teacher_answer": "\\(-\\dfrac{25x \\arctan(5x)}{\\sqrt{25x^2+1}}\\)",
+      "ground_truth": "-\\frac{25x\\cdot\\operatorname{arctg}5x}{\\sqrt{25x^{2}+1}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13147,
+      "teacher_answer": "b\\sqrt{a^2-b^2}",
+      "ground_truth": "b\\sqrt{^{2}-b^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13159,
+      "teacher_answer": "a) \\(\\frac{2}{133}\\), b) \\(\\frac{8}{343}\\), c) \\(\\frac{2}{133}\\)",
+      "ground_truth": "\\frac{2}{133},\\frac{8}{343},\\frac{2}{133}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13173,
+      "teacher_answer": "B₁P:B₁C₁ = 2:3, C₁Q:CC₁ = 1:1",
+      "ground_truth": "2:3;1:1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13182,
+      "teacher_answer": "a=3, b=4",
+      "ground_truth": "(,b)=(3,4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13222,
+      "teacher_answer": "Galya is 2, Vova is 14, Katya is 98",
+      "ground_truth": "Gala:2,Vova:14,Katya:98",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13248,
+      "teacher_answer": "(-3-√3, 3-√3) and (3-√3, -3-√3)",
+      "ground_truth": "B(-3-\\sqrt{3};3-\\sqrt{3}),\\quadC(3-\\sqrt{3};-3-\\sqrt{3})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13266,
+      "teacher_answer": "\\binom{199}{100}",
+      "ground_truth": "(\\begin{pmatrix}199\\\\100\\end{pmatrix})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13290,
+      "teacher_answer": "\\((\\sqrt{ab}, 0)\\)",
+      "ground_truth": "(\\sqrt{},0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13326,
+      "teacher_answer": "\\( dy = -\\frac{2x\\ln|x|}{(1+x^{2})^{2}}\\,dx \\)",
+      "ground_truth": "-\\frac{2x\\cdot\\ln|x|}{(1+x^{2})^{2}}\\cdot",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13363,
+      "teacher_answer": "(-8, 1]",
+      "ground_truth": "x\\in(-8;1]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13367,
+      "teacher_answer": "\\frac{4a\\sqrt{10}}{5}",
+      "ground_truth": "\\frac{4\\sqrt{10}}{5}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13426,
+      "teacher_answer": "376 and 625",
+      "ground_truth": "376,625",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13457,
+      "teacher_answer": "√39",
+      "ground_truth": "\\sqrt{39}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13463,
+      "teacher_answer": "The prime triples \\((p, q, r)\\) satisfying the conditions are \\((2, 5, 3)\\), \\((5, 3, 2)\\), and \\((3, 2, 5)\\).",
+      "ground_truth": "(2,5,3),(5,3,2),(3,2,5)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13483,
+      "teacher_answer": "\\(x = \\frac{3\\pi}{4} + k\\pi,\\ k \\in \\mathbb{Z}\\)",
+      "ground_truth": "\\frac{3\\pi}{4}+k\\cdot\\pi,k\\in\\mathbb{Z}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13509,
+      "teacher_answer": "[-3, -1] ∪ [5, ∞)",
+      "ground_truth": "[-3,-1]\\bigcup[5,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13521,
+      "teacher_answer": "$-1 < x \\le \\sqrt{2}$",
+      "ground_truth": "(-1;\\sqrt{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13566,
+      "teacher_answer": "(6,210) and (30,42)",
+      "ground_truth": "(6,210)(30,42)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13570,
+      "teacher_answer": "\\frac{b}{a}\\sqrt{a^2+b^2}",
+      "ground_truth": "\\frac{b}{}\\cdot\\sqrt{^{2}+b^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13579,
+      "teacher_answer": "P(x)=x+1 and P(x)=x+p",
+      "ground_truth": "P(x)=x+1orP(x)=x+p",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13589,
+      "teacher_answer": "a \\in \\left(0, \\frac{1}{\\sqrt[3]{4}}\\right) \\cup (4, 32)",
+      "ground_truth": "\\in(0;1/\\sqrt[3]{4})\\cup(4;32)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13595,
+      "teacher_answer": "1004",
+      "ground_truth": "xy1004",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13611,
+      "teacher_answer": "$-5 \\le x \\le 3$",
+      "ground_truth": "x\\in[-5,3]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13673,
+      "teacher_answer": "65°, 85°, 95°, 115°",
+      "ground_truth": "65,85,95,115",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13677,
+      "teacher_answer": "[-1,0) ∪ (0,3) ∪ (4, ∞)",
+      "ground_truth": "x\\in[-1;0)\\cup(0;3)\\cup(4;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13683,
+      "teacher_answer": "p = 2 or p ≡ 3 (mod 4)",
+      "ground_truth": "2orp\\equiv3(\\bmod4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13706,
+      "teacher_answer": "\\dfrac{b-a}{2a}",
+      "ground_truth": "\\frac{b-}{2a}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13727,
+      "teacher_answer": "Peter is 17 and Jan is 24.",
+      "ground_truth": "Peter\\is\\17\\\\old\\\\Jan\\is\\24\\\\old",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13737,
+      "teacher_answer": "\\frac{d^2}{16}",
+      "ground_truth": "\\frac{^2}{16}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13739,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13783,
+      "teacher_answer": "AP = √2 AQ",
+      "ground_truth": "AP=\\sqrt{2}AQ",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13789,
+      "teacher_answer": "(0,0)",
+      "ground_truth": "E(0;0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13791,
+      "teacher_answer": "(3,11)",
+      "ground_truth": "=3,\\quadn=11",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13797,
+      "teacher_answer": "(5, ∞)",
+      "ground_truth": "k \\in (5, +\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13801,
+      "teacher_answer": "(-1, 2, 0)",
+      "ground_truth": "M^{\\}(-1;2;0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13831,
+      "teacher_answer": "a) (1, 1); b) (1/4, 7/4)",
+      "ground_truth": "(1;1)(1/4;7/4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13837,
+      "teacher_answer": "(3,5) and (5,3)",
+      "ground_truth": "(3,5)(5,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13840,
+      "teacher_answer": "(1, 1)",
+      "ground_truth": "(x;y)=(1;1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13860,
+      "teacher_answer": "[-12, 38]",
+      "ground_truth": "-12\\leq\\leq38",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13971,
+      "teacher_answer": "[1, √2]",
+      "ground_truth": "1\\leqslanty\\leqslant\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 13997,
+      "teacher_answer": "k < -2 or k > 2",
+      "ground_truth": "k\\in(-\\infty,-2)\\cup(2,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14000,
+      "teacher_answer": "30°, 60°, 90°",
+      "ground_truth": "30,60,90",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14007,
+      "teacher_answer": "A = 264 kg, B = 220 kg, C = 275 kg",
+      "ground_truth": "264\\mathrm{~},220\\mathrm{~},275\\mathrm{~}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14010,
+      "teacher_answer": "n = 4, n = p^k, n = 2p^k, where p is an odd prime and k is a positive integer.",
+      "ground_truth": "4,p^k,2p^k",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14015,
+      "teacher_answer": "a ≤ -1 or a = 1",
+      "ground_truth": "(-\\infty,-1]\\cup{1}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14033,
+      "teacher_answer": "42°, 64°, 74°",
+      "ground_truth": "42,64,74",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14040,
+      "teacher_answer": "\\sqrt{d^2 + \\frac{c^2}{3}}",
+      "ground_truth": "\\sqrt{^{2}+\\frac{^{2}}{3}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14049,
+      "teacher_answer": "$$x \\in [-1,0) \\cup \\left[ \\sqrt{\\frac{\\sqrt{5}-1}{2}}, 1 \\right]$$",
+      "ground_truth": "[-1;0)\\cup[\\sqrt{\\frac{\\sqrt{5}-1}{2}};1]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14054,
+      "teacher_answer": "The area of the convex hull of the points \\(P_1, P_2, \\dots, P_n\\).",
+      "ground_truth": "\\text{Area of the convex hull of } P_1, P_2, \\ldots, P_n",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14092,
+      "teacher_answer": "36 and 27",
+      "ground_truth": "I36old,You27old",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14095,
+      "teacher_answer": "s(t)=t^3 - t^2 + t",
+      "ground_truth": "^{3}-^{2}+",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14142,
+      "teacher_answer": "\\{ (1,1), (16,2), (27,3) \\}",
+      "ground_truth": "\\{1,1\\}, \\{16,2\\}, \\{27,3\\}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14151,
+      "teacher_answer": "20°54'19\"",
+      "ground_truth": "20^{\\circ} 54^{\\prime} 19^{\\prime \\prime}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14156,
+      "teacher_answer": "$\\pi - \\arctan 5$",
+      "ground_truth": "\\beta=\\pi-\\operatorname{arctg}5",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14170,
+      "teacher_answer": "\\frac{\\pi}{4}+\\pi k",
+      "ground_truth": "\\frac{\\pi}{4}+\\pik,k\\inZ",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14210,
+      "teacher_answer": "\\(\\arctan\\frac{32}{43}\\)",
+      "ground_truth": "\\operatorname{arctg} \\frac{32}{43}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14235,
+      "teacher_answer": "\\(x^3 = \\frac{3}{5}P_1(x) + \\frac{2}{5}P_3(x)\\)",
+      "ground_truth": "x^{3}=\\frac{3}{5}P_{1}(x)+\\frac{2}{5}P_{3}(x)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14254,
+      "teacher_answer": "f(n)=n^3",
+      "ground_truth": "f(x)=x^3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14257,
+      "teacher_answer": "\\[\n\\boxed{f(n) \\le (n-1)^2 \\text{ with equality for infinitely many } n}\n\\]",
+      "ground_truth": "f(n) \\le (n-1)^2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14267,
+      "teacher_answer": "a ≤ -2√2",
+      "ground_truth": "a \\in(-\\infty,-2 \\sqrt{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14336,
+      "teacher_answer": "Alfred: 4, Bruno: 7, Christoph: 13, Damien: 8",
+      "ground_truth": "4,7,13,8",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14346,
+      "teacher_answer": "{n ∈ ℕ* : n is divisible by 4}",
+      "ground_truth": "n\\inM_{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14354,
+      "teacher_answer": "\\(P(x) = C(x^3 - x)\\) for any constant \\(C\\)",
+      "ground_truth": "p(x)=(x^3-x)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14359,
+      "teacher_answer": "(1,1) and (3,3)",
+      "ground_truth": "(n,)\\in{(1,1),(3,3)}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14381,
+      "teacher_answer": "(0,0,0) and (1,1,1)",
+      "ground_truth": "(0,0,0)(1,1,1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14400,
+      "teacher_answer": "x < 0 or x ≥ 2.5",
+      "ground_truth": "x<0orx\\geq2.5",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14434,
+      "teacher_answer": "(-\\infty, -2) \\cup (1, 2) \\cup (3, \\infty)",
+      "ground_truth": "x\\in(-\\infty;-2)\\cup(1;2)\\cup(3;\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14495,
+      "teacher_answer": "-2, -\\frac{1}{2}, \\frac{1}{2}, 2",
+      "ground_truth": "\\in{-2,-\\frac{1}{2},\\frac{1}{2},2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14522,
+      "teacher_answer": "a) \\(a^2-1\\); b) \\(4a^2-9\\); c) \\(m^6-n^{10}\\); d) \\(9m^4-25n^4\\)",
+      "ground_truth": ")^{2}-1;b)4^{2}-9;)^{6}-n^{10};)9^{4}-25n^{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14561,
+      "teacher_answer": "4.3 and 11.5",
+      "ground_truth": "4.3\\times11.5",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14575,
+      "teacher_answer": "0 ≤ n < 169",
+      "ground_truth": "[0;169)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14638,
+      "teacher_answer": "√3",
+      "ground_truth": "\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14663,
+      "teacher_answer": "(3, 7/2) ∪ (7/2, 4)",
+      "ground_truth": "x\\in(3;\\frac{7}{2})\\cup(\\frac{7}{2};4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14681,
+      "teacher_answer": "-\\frac{3}{7} \\leq x < 3",
+      "ground_truth": "[-\\frac{3}{7};3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14708,
+      "teacher_answer": "$a < -1$ or $\\frac{3}{5} < a < 1$",
+      "ground_truth": "(-\\infty;-1)\\cup(\\frac{3}{5};1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14721,
+      "teacher_answer": "41, 43, 47; 97",
+      "ground_truth": "41,43,47,97",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14743,
+      "teacher_answer": "\\( -\\frac{\\sqrt{55}}{2} < m < \\frac{\\sqrt{55}}{2} \\)",
+      "ground_truth": "-\\frac{\\sqrt{55}}{2}<<\\frac{\\sqrt{55}}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14770,
+      "teacher_answer": "x = \\frac{\\pi}{4}, y = \\frac{\\pi}{4}",
+      "ground_truth": "\\frac{\\pi}{4},\\frac{\\pi}{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14791,
+      "teacher_answer": "√3 and 2√3",
+      "ground_truth": "\\sqrt{3},2\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14861,
+      "teacher_answer": "xy = 6",
+      "ground_truth": "x6",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14872,
+      "teacher_answer": "x ∈ (0; 1/5] ∪ [5; +∞)",
+      "ground_truth": "x\\in(0;\\frac{1}{5}]\\cup[5;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14876,
+      "teacher_answer": "(1/2, 2)",
+      "ground_truth": "\\frac{1}{2}<s_{}:s_{b}<2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14880,
+      "teacher_answer": "z = \\frac{h}{2}",
+      "ground_truth": "\\frac{}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14918,
+      "teacher_answer": "f(x) = \\frac{1}{x}",
+      "ground_truth": "f(y)=\\frac{1}{y}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 14919,
+      "teacher_answer": "\\binom{n-1}{r-1}",
+      "ground_truth": "C_{n-1}^{r-1}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15016,
+      "teacher_answer": "(4,3), (3,4), (-3,-4), (-4,-3)",
+      "ground_truth": "(4;3),(3;4),(-3;-4),(-4;-3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15027,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15031,
+      "teacher_answer": "k = 2^m for m = 0, 1, 2, ...",
+      "ground_truth": "k=2^{}(=0,1,2,\\cdots)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15039,
+      "teacher_answer": "\\frac{1}{2}, -\\frac{5}{6}",
+      "ground_truth": "=\\frac{1}{2},=-\\frac{5}{6}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15097,
+      "teacher_answer": "\\cot\\left(\\frac{17\\alpha}{2}\\right)",
+      "ground_truth": "\\operatorname{ctg}\\frac{17\\alpha}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15105,
+      "teacher_answer": "\\frac{R^3}{3}(\\alpha+\\beta+\\gamma-\\pi)",
+      "ground_truth": "\\frac{(\\alpha + \\beta + \\gamma - \\pi) R^3}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15108,
+      "teacher_answer": "y = C_1 x^2 \\ln|x| + C_2 x^2 + C_3 x + C_4",
+      "ground_truth": "C_{1}^{\\}x^{2}\\lnx+C_{2}^{\\}x^{2}+C_{3}x+C_{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15109,
+      "teacher_answer": "3 to 17",
+      "ground_truth": "3\\leq\\leq17",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15141,
+      "teacher_answer": "(3,5,7) and (12,19,28)",
+      "ground_truth": "(,b,)=(3,5,7),(12,19,28)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15158,
+      "teacher_answer": "\\(\\frac{8}{3}\\) cm, \\(\\frac{25}{3}\\) cm, 5 cm",
+      "ground_truth": "\\frac{8}{3},\\frac{25}{3},5",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15185,
+      "teacher_answer": "\\(a \\in (-3, -2) \\cup (-2, 1) \\cup (1, 2)\\)",
+      "ground_truth": "(-3;-2)\\cup(-2;1)\\cup(1;2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15242,
+      "teacher_answer": "30°, 60°",
+      "ground_truth": "30,60",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15258,
+      "teacher_answer": "\\frac{a^2}{\\sqrt{4a^2-b^2}}",
+      "ground_truth": "\\frac{^2}{\\sqrt{4a^2-b^2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15262,
+      "teacher_answer": "(-4, -3) ∪ (8, ∞)",
+      "ground_truth": "x\\in(-4;-3)\\cup(8;\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15266,
+      "teacher_answer": "(0,1) ∪ (1, 2^{2/7}) ∪ (4, ∞)",
+      "ground_truth": "(0,1)\\cup(1,2^{\\frac{2}{7}})\\cup(4,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15315,
+      "teacher_answer": "\\(E(T) = \\frac{1}{v},\\quad \\operatorname{Var}(T) = \\frac{1}{v^2}\\)",
+      "ground_truth": "ET=\\frac{1}{v},\\quadDT=\\frac{1}{v^2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15348,
+      "teacher_answer": "Marko: 2, Ante: 5",
+      "ground_truth": "Markogets2kuna,Antegets5kuna",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15352,
+      "teacher_answer": "0 ≤ x ≤ 4",
+      "ground_truth": "[0,4]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15355,
+      "teacher_answer": "(1, 0, 1)",
+      "ground_truth": "M^{\\}(1;0;1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15365,
+      "teacher_answer": "(-1, 3]",
+      "ground_truth": "(-1,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15366,
+      "teacher_answer": "(1,1,1) and (2,2,2)",
+      "ground_truth": "(1,1,1)(2,2,2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15367,
+      "teacher_answer": "40 days, 25%",
+      "ground_truth": "40;25",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15374,
+      "teacher_answer": "\\frac{n+1}{2}",
+      "ground_truth": "C_{\\max}=\\frac{n+1}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15420,
+      "teacher_answer": "(1,1,3), (2,0,3)",
+      "ground_truth": "(,b,n)=(1,1,3),(2,0,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15445,
+      "teacher_answer": "(2, 2)",
+      "ground_truth": "2,2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15496,
+      "teacher_answer": "(\\sqrt{2}, \\sqrt{2}, \\sqrt{2}) \\text{ and } (-\\sqrt{2}, -\\sqrt{2}, -\\sqrt{2})",
+      "ground_truth": "(\\sqrt{2},\\sqrt{2},\\sqrt{2})(-\\sqrt{2},-\\sqrt{2},-\\sqrt{2})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15503,
+      "teacher_answer": "n = 4, n = 8, and all n ≥ 10",
+      "ground_truth": "n=4,n=8,n\\geqslant10",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15514,
+      "teacher_answer": "\\frac{2ah}{(a+h)^2}",
+      "ground_truth": "\\frac{2ah}{(+)^2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15528,
+      "teacher_answer": "\\frac{h}{a^2+h^2}",
+      "ground_truth": "\\frac{}{^{2}+^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15558,
+      "teacher_answer": "√6/3",
+      "ground_truth": "\\frac{\\sqrt{6}}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15592,
+      "teacher_answer": "(1, 2, …, n)",
+      "ground_truth": "(1,2,\\cdots,n)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15630,
+      "teacher_answer": "(3,3,5)",
+      "ground_truth": "3,3,5",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15647,
+      "teacher_answer": "24, 1170",
+      "ground_truth": "24divisors,sum1170",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15680,
+      "teacher_answer": "m ≤ -1",
+      "ground_truth": "\\leqslant-1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15686,
+      "teacher_answer": "Ljubljana: 10, Celje: 35, Maribor: 25",
+      "ground_truth": "10,35,25",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15689,
+      "teacher_answer": "a = \\pm \\frac{17\\pi}{6}",
+      "ground_truth": "\\frac{17\\pi}{6}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15718,
+      "teacher_answer": "449, 2014",
+      "ground_truth": "449digits,sum2014",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15780,
+      "teacher_answer": "5 ≤ x ≤ 10",
+      "ground_truth": "x\\in[5,10]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15801,
+      "teacher_answer": "1 < x < 3",
+      "ground_truth": "(1;3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15802,
+      "teacher_answer": "\\binom{n+4}{4}",
+      "ground_truth": "\\mathrm{C}_{n+4}^{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15809,
+      "teacher_answer": "0, 1, -1",
+      "ground_truth": "{x}_{{e}^{\\}}={0,1,-1}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15813,
+      "teacher_answer": "22 \\le a < 23",
+      "ground_truth": "22\\leq23",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15817,
+      "teacher_answer": "\\frac{c\\sqrt{3}}{3}",
+      "ground_truth": "\\frac{\\sqrt{3}}{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15829,
+      "teacher_answer": "$-\\dfrac{1}{2} \\leq m \\leq 4-2\\sqrt{2}$",
+      "ground_truth": "[-\\frac{1}{2},4-2\\sqrt{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15848,
+      "teacher_answer": "$(1,1),\\ (16,2),\\ (27,3)$",
+      "ground_truth": "(,b)=(1,1),(16,2),(27,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 15892,
+      "teacher_answer": "\\left[\\frac{3-\\sqrt{5}}{2}, 1\\right]",
+      "ground_truth": "\\frac{3-\\sqrt{5}}{2}\\leqslant\\leqslant1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16020,
+      "teacher_answer": "60° or 120°",
+      "ground_truth": "60or120",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16048,
+      "teacher_answer": "2015 < a < 2017",
+      "ground_truth": "\\in(2015,2017)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16053,
+      "teacher_answer": "$\\frac{1}{f(0)}$",
+      "ground_truth": "\\lim_{n \\to \\infty} nx_n = \\frac{1}{f(0)}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16074,
+      "teacher_answer": "(4,4,0)",
+      "ground_truth": "=4,b=4,=0",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16085,
+      "teacher_answer": "(7/6, 7/6)",
+      "ground_truth": "x_{}=\\frac{7}{6},y_{}=\\frac{7}{6}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16111,
+      "teacher_answer": "x ≤ -6 or x = -5",
+      "ground_truth": "x\\in(-\\infty;-6]\\cup{-5}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16152,
+      "teacher_answer": "9, 6",
+      "ground_truth": "(,n)=(9,6)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16153,
+      "teacher_answer": "1,-2",
+      "ground_truth": "=1,b=-2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16154,
+      "teacher_answer": "\\dfrac{bc\\sin\\alpha}{\\sqrt{b^2+c^2+2bc\\cos\\alpha}}",
+      "ground_truth": "\\frac{\\sin\\alpha}{\\sqrt{b^{2}+^{2}+2\\cos\\alpha}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16206,
+      "teacher_answer": "$$dy = \\frac{x-1}{\\sqrt{1+2x} \\, (x + \\sqrt{1+2x})} \\, dx$$",
+      "ground_truth": "\\frac{x-1}{(x+\\sqrt{1+2x})\\sqrt{1+2x}}\\cdot",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16237,
+      "teacher_answer": "8/3 + ln(3)",
+      "ground_truth": "\\frac{8}{3}+\\ln3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16239,
+      "teacher_answer": "\\operatorname{lcm}(1,2,\\ldots,n)",
+      "ground_truth": "\\operatorname{LCM}(1,2,\\ldots,n)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16255,
+      "teacher_answer": "[1, 3+2\\sqrt{2}]",
+      "ground_truth": "1\\leqslant\\leqslant3+2\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16281,
+      "teacher_answer": "Father is 69, I am 47, Sister is 44.",
+      "ground_truth": "69,47,44",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16284,
+      "teacher_answer": "f(n)=n^2",
+      "ground_truth": "f(a) = a^2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16296,
+      "teacher_answer": "(-1, 0, -1)",
+      "ground_truth": "M^{\\}(-1;0;-1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16311,
+      "teacher_answer": "$(a,b) = (11,1), (49,1),$ and $(7k^2, 7k)$ for all positive integers $k$.",
+      "ground_truth": "(11,1),(49,1),(7k^2,7k)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16312,
+      "teacher_answer": "4, 12",
+      "ground_truth": ")4;b)12",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16332,
+      "teacher_answer": "\\binom{n}{\\lfloor n/2 \\rfloor}",
+      "ground_truth": "C_{n}^{[\\frac{n}{2}]}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16337,
+      "teacher_answer": "\\( y' = -\\frac{y}{e^y + x} \\), \\( y'(0) = -\\frac{1}{e} \\)",
+      "ground_truth": "y^{\\}(0)=-\\frac{1}{e}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16349,
+      "teacher_answer": "(14,19)",
+      "ground_truth": "=14,b=19",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16376,
+      "teacher_answer": "a) \\(3^{200}\\), b) \\(3^{28}\\), c) \\(4^{53}\\)",
+      "ground_truth": ")3^{200};b)3^{28};)4^{53}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16395,
+      "teacher_answer": "0 < a ≤ 1 or a = 2",
+      "ground_truth": "\\in(0,1]\\cup{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16417,
+      "teacher_answer": "\\sqrt{m^2+n^2}",
+      "ground_truth": "\\sqrt{^2+n^2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16433,
+      "teacher_answer": "$-1 \\leqslant a < 0$",
+      "ground_truth": "-1<\\leqslant0",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16449,
+      "teacher_answer": "(1, 1) and (1, 3)",
+      "ground_truth": "(1,1)(1,3)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16524,
+      "teacher_answer": "a) 50, b) 150",
+      "ground_truth": ")50;b)150",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16535,
+      "teacher_answer": "[0.5, 1]",
+      "ground_truth": "E_{f}=[0.5;1]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16550,
+      "teacher_answer": "\\{x \\mid x=36n^{2},\\ n\\in\\mathbf{N}\\}",
+      "ground_truth": "{x\\mid36n^{2},n\\in{N}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16610,
+      "teacher_answer": "1 and -1; i and -i",
+      "ground_truth": "1-1;+i-i",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16636,
+      "teacher_answer": "a) $a$, b) $a-b$, c) $b+1$",
+      "ground_truth": ")b)-)b+1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16640,
+      "teacher_answer": "$\\cos 36^\\circ = \\frac{\\sqrt{5}+1}{4}$; $\\sin 18^\\circ = \\frac{\\sqrt{5}-1}{4}$",
+      "ground_truth": "\\cos36=\\frac{\\sqrt{5}+1}{4};\\sin18=\\frac{\\sqrt{5}-1}{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16677,
+      "teacher_answer": "a > 3",
+      "ground_truth": "a \\in (3, +\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16691,
+      "teacher_answer": "f(x)=e^{x}(\\sin x+2013)",
+      "ground_truth": "f(x)=e^{x}\\sinx+2013e^{x},x\\in\\mathbb{R}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16704,
+      "teacher_answer": "36°, 144°",
+      "ground_truth": "36,144",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16715,
+      "teacher_answer": "z = \\frac{\\bar{w} + \\bar{\\lambda} w}{1 - |\\lambda|^2}",
+      "ground_truth": "z=\\frac{\\bar{\\lambda} w+w}{1-|\\lambda|^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16717,
+      "teacher_answer": "\\frac{b-a}{2}",
+      "ground_truth": "\\frac{}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16765,
+      "teacher_answer": "x = \\underbrace{111\\ldots1}_{2023\\text{ ones}}",
+      "ground_truth": "111\\ldots1_{w}2023",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16768,
+      "teacher_answer": "1:9",
+      "ground_truth": ":1:9",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16770,
+      "teacher_answer": "(\\pm 1, 0), (\\pm 4, 3), (\\pm 4, 5)",
+      "ground_truth": "(\\1,0),(\\4,3),(\\4,5)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16773,
+      "teacher_answer": "2 and 4√3",
+      "ground_truth": "2;4\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16807,
+      "teacher_answer": "Each point divides the side in the ratio 1:2, and the ratio of the area of the original triangle to the area of the formed triangle is 3:1.",
+      "ground_truth": "1:2,3:1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16812,
+      "teacher_answer": "p1 + p2 - p3",
+      "ground_truth": "p_1 + p_2 - p_3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16814,
+      "teacher_answer": "[-2, -\\sqrt{2}]",
+      "ground_truth": "[-2;-\\sqrt{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16830,
+      "teacher_answer": "$a \\in \\left[-\\frac{5\\pi}{2}, \\frac{\\pi}{2}\\right]$",
+      "ground_truth": "\\in[-\\frac{5\\pi}{2};\\frac{\\pi}{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16894,
+      "teacher_answer": "x = a^2 + b^2",
+      "ground_truth": "^{2}+b^{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16899,
+      "teacher_answer": "16, 7, 17, 4",
+      "ground_truth": "16\\mathrm{~},7\\mathrm{~},17\\mathrm{~},4\\mathrm{~}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16901,
+      "teacher_answer": "The smallest constant is $c = \\frac{1}{8}$. Equality holds if and only if all nonzero $x_i$ are equal and there are at most two nonzero $x_i$.",
+      "ground_truth": "\\frac{1}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16918,
+      "teacher_answer": "a^2+b^2+4c",
+      "ground_truth": "^{2}+b^{2}+4c",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16919,
+      "teacher_answer": "\\sec(58x)\\tan(58x)",
+      "ground_truth": "\\frac{\\operatorname{tg}58x}{\\cos58x}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16925,
+      "teacher_answer": "√(7/2)",
+      "ground_truth": "\\sqrt{\\frac{7}{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16929,
+      "teacher_answer": "(2,4,8) and (3,5,15)",
+      "ground_truth": "(2,4,8)(3,5,15)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 16932,
+      "teacher_answer": "13, 14, 15",
+      "ground_truth": "13\\mathrm{~},14\\mathrm{~},15\\mathrm{~}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17027,
+      "teacher_answer": "(3,3) and (7,5)",
+      "ground_truth": "(3,3)(7,5)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17041,
+      "teacher_answer": "30°, 60°, 90°",
+      "ground_truth": "30,60,90",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17045,
+      "teacher_answer": "x₁ = 3/2, x₂ = 1/2",
+      "ground_truth": "(3/2,1/2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17051,
+      "teacher_answer": "$-1 \\le x < 1 - \\frac{\\sqrt{31}}{8}$",
+      "ground_truth": "-1\\leqqx<1-\\frac{\\sqrt{31}}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17090,
+      "teacher_answer": "The fraction is irreducible for all natural numbers $n$ such that $n \\not\\equiv 2 \\pmod{5}$.",
+      "ground_truth": "n\\not\\equiv2\\quad(\\bmod5)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17091,
+      "teacher_answer": "(1, k) for any positive integer k",
+      "ground_truth": "(1, k)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17145,
+      "teacher_answer": "Saturday, September 23",
+      "ground_truth": "September\\23\\(Saturday)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17165,
+      "teacher_answer": "$f(x)=c-x$, $g(x)=c-x$, $h(x)=x^2-cx+d$ for any constants $c,d \\in \\mathbb{R}$.",
+      "ground_truth": "f(x) = g(x) = -x + a, h(x) = x^{2} - a x + b",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17173,
+      "teacher_answer": "All triples (a,b,c) of natural numbers such that either a=b=c, or {a,b,c} = {k,k,2k} for some positive integer k, or {a,b,c} = {k,2k,3k} for some positive integer k.",
+      "ground_truth": "(,,),(,,2a),(,2a,3a)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17204,
+      "teacher_answer": "\\sqrt{\\frac{a^2+b^2}{5}}",
+      "ground_truth": "\\sqrt{\\frac{^{2}+b^{2}}{5}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17231,
+      "teacher_answer": "\\sqrt{a^2b^2 + a^2c^2 + b^2c^2}",
+      "ground_truth": "\\sqrt{^{2}b^{2}+b^{2}^{2}+^{2}^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17233,
+      "teacher_answer": "\\binom{1950}{9}",
+      "ground_truth": "C_{1950}^{9}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17239,
+      "teacher_answer": "a(2-\\sqrt{2})",
+      "ground_truth": "(2-\\sqrt{2})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17243,
+      "teacher_answer": "a) 29, b) \\(2x(y^2+z^2)\\), c) 0",
+      "ground_truth": "29,2x(y^{2}+z^{2}),0",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17269,
+      "teacher_answer": "a^5+d^6 = c^6-b^5",
+      "ground_truth": "^{5}+^{6}=^{6}-b^{5}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17285,
+      "teacher_answer": "4, -9",
+      "ground_truth": "4-9",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17383,
+      "teacher_answer": "(2, b) where b is any nonzero integer",
+      "ground_truth": "(2,b)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17408,
+      "teacher_answer": "x=2, y=10, z=2",
+      "ground_truth": "2,10,2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17410,
+      "teacher_answer": "2 < x < 8",
+      "ground_truth": "x\\in(2;8)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17430,
+      "teacher_answer": "8 36",
+      "ground_truth": "8:36",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17450,
+      "teacher_answer": "\\sqrt{a^2+b^2}",
+      "ground_truth": "\\sqrt{^{2}+b^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17467,
+      "teacher_answer": "c = \\frac{1}{8}; equality holds if and only if all $x_i$ are zero, or exactly two of them are nonzero and equal and the rest are zero.",
+      "ground_truth": "\\frac{1}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17476,
+      "teacher_answer": "A had 54 crowns, B had 162 crowns, C had 27 crowns.",
+      "ground_truth": "54,162,27",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17498,
+      "teacher_answer": "a = -1-pq, and a = 1-pq if n is odd, a = 1+pq if n is even",
+      "ground_truth": "(-1)^{n}p1or-p1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17519,
+      "teacher_answer": "(21,12), (31,13)",
+      "ground_truth": "(21,12)(31,13)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17523,
+      "teacher_answer": "\\( P(x,y) = (x+y)^{n-1}(x-2y) \\) for any positive integer \\( n \\)",
+      "ground_truth": "p(x,y)=(x+y)^{n-1}(x-2y)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17553,
+      "teacher_answer": "(-1, 1) ∪ (1, ∞)",
+      "ground_truth": "x\\in(-1,1)\\cup(1,\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17558,
+      "teacher_answer": "All positive integers of the form \\(n = p^m\\), where \\(p\\) is a prime and \\(m \\ge 3\\).",
+      "ground_truth": "p^{},wherepis\\geq3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17579,
+      "teacher_answer": "\\sqrt{\\frac{a^2+b^2}{2}}",
+      "ground_truth": "\\sqrt{\\frac{^2+b^2}{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17627,
+      "teacher_answer": "\\(\\frac{m}{6}(2ac+ad+bc+2bd)\\)",
+      "ground_truth": "\\frac{}{6}(2+2++)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17636,
+      "teacher_answer": "2 and 0",
+      "ground_truth": "Masha\\has\\2\\cornflowers,\\Katya\\has\\0\\cornflowers",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17653,
+      "teacher_answer": "(0, 1/4] ∪ {1}",
+      "ground_truth": "(0;\\frac{1}{4}]\\cup{1}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17679,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17680,
+      "teacher_answer": "\\lceil \\log_2 (n+1) \\rceil",
+      "ground_truth": "[\\log_{2}n]+1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17757,
+      "teacher_answer": "12.08 cm and 19.92 cm",
+      "ground_truth": "12.08\\leqX\\leq19.92",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17760,
+      "teacher_answer": "\\binom{n}{4}",
+      "ground_truth": "C_{n}^{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17801,
+      "teacher_answer": "[-\\sqrt{2}, \\sqrt{2}]",
+      "ground_truth": "[-\\sqrt{2};\\sqrt{2}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17821,
+      "teacher_answer": "t \\geq 6",
+      "ground_truth": "[6,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17829,
+      "teacher_answer": "x < 0 or x > 2",
+      "ground_truth": "(-\\infty,0)\\cup(2,\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17838,
+      "teacher_answer": "y+1 = C(x-1), where C is an arbitrary constant.",
+      "ground_truth": "y+1=C(x-1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17842,
+      "teacher_answer": "f(x) = ax^2 + bx + c, where a, b, c are arbitrary real constants.",
+      "ground_truth": "f(x)=^{2}++\\text{,where},b,\\in{R}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17849,
+      "teacher_answer": "a ≤ -1-√5 or a ≥ (1+√5)/2",
+      "ground_truth": "(-\\infty,-1-\\sqrt{5})\\cup(\\frac{1+\\sqrt{5}}{2},+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17910,
+      "teacher_answer": "√6",
+      "ground_truth": "\\sqrt{6}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 17929,
+      "teacher_answer": "t = i \\frac{1-z}{1+z}",
+      "ground_truth": "z=\\frac{1+t i}{1-t i}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18030,
+      "teacher_answer": "301, 373",
+      "ground_truth": "301or373",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18043,
+      "teacher_answer": "\\(\\dfrac{\\sqrt{2} l \\sin \\theta \\cos \\theta}{\\sin \\theta + \\sqrt{2} \\cos \\theta}\\)",
+      "ground_truth": "\\frac{\\sqrt{2}\\sin\\theta}{\\tan\\theta+\\sqrt{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18071,
+      "teacher_answer": "(0, -3, -2)",
+      "ground_truth": "M^{\\}(0;-3;-2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18080,
+      "teacher_answer": "(2, 2^n) for n ∈ ℕ^+",
+      "ground_truth": "(2,2^{\\mathrm{k}}),\\mathrm{k}\\in\\mathrm{Z}^{+}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18095,
+      "teacher_answer": "(1,1) and (2,4)",
+      "ground_truth": "(1,1)(2,4)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18101,
+      "teacher_answer": "x_n = a n^2 + b n",
+      "ground_truth": "x_{n}=^{2}+",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18150,
+      "teacher_answer": "x > 0",
+      "ground_truth": "(0;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18154,
+      "teacher_answer": "\\((-3, 0) \\cup (3, \\infty)\\)",
+      "ground_truth": "-3<x<0\\quador\\quadx>3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18212,
+      "teacher_answer": "a^2",
+      "ground_truth": "^2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18218,
+      "teacher_answer": "30/π minutes",
+      "ground_truth": "\\frac{30",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18226,
+      "teacher_answer": "[-1, 5/4]",
+      "ground_truth": "[-1;\\frac{5}{4}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18239,
+      "teacher_answer": "0 < p ≤ 3",
+      "ground_truth": "p\\in(0,3]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18253,
+      "teacher_answer": "Maximum: 14, Minimum: -18",
+      "ground_truth": "14-18",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18276,
+      "teacher_answer": "\\dfrac{2}{x(1 - a x^{4})}",
+      "ground_truth": "\\frac{2}{x(1-^{4})}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18313,
+      "teacher_answer": "(3,13) and (11,7)",
+      "ground_truth": "(3,13)(11,7)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18349,
+      "teacher_answer": "a) quotient 5, remainder 15; b) quotient 17, remainder 0; c) quotient -3, remainder 7; d) quotient -6, remainder 2",
+      "ground_truth": "a) 5,15 \\\\ b) 17,0 \\\\ c) -3,7 \\\\ d) -6,2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18367,
+      "teacher_answer": "p(x) = C(x^3 - x), where C is an arbitrary constant",
+      "ground_truth": "p(x)=(x^3-x)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18374,
+      "teacher_answer": "\\mathbb{R} \\setminus \\{0\\}",
+      "ground_truth": "all\\real\\\\except\\for\\0",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18392,
+      "teacher_answer": "(669, 1338) and (1338, 669)",
+      "ground_truth": "(669,1338)(1338,669)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18508,
+      "teacher_answer": "\\lfloor 1/a \\rfloor",
+      "ground_truth": "[\\frac{1}{}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18579,
+      "teacher_answer": "a = -\\frac{1}{2} or a > 0",
+      "ground_truth": "{-\\frac{1}{2}}\\cup(0,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18663,
+      "teacher_answer": "-1 < n < 1",
+      "ground_truth": "n\\in(-1,1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18665,
+      "teacher_answer": "a=\\frac{(2m-1)^2+1}{2} \\text{ where } m \\text{ is a positive integer}",
+      "ground_truth": "\\frac{(2-1)^{2}+1}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18709,
+      "teacher_answer": "40 m, 120 m",
+      "ground_truth": "40\\mathrm{~},120\\mathrm{~}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18742,
+      "teacher_answer": "5, 7, 11, 15",
+      "ground_truth": ")5;b)7;)11;)15",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18744,
+      "teacher_answer": "\\((\\sqrt{3}, 1)\\), \\((-1, \\sqrt{3})\\), \\((-\\sqrt{3}, -1)\\), \\((1, -\\sqrt{3})\\)",
+      "ground_truth": "(\\sqrt{3};1),(-1;\\sqrt{3}),(-\\sqrt{3};-1),(1;-\\sqrt{3})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18756,
+      "teacher_answer": "[6, ∞)",
+      "ground_truth": "[6,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18764,
+      "teacher_answer": "n ≡ 1 (mod 6)",
+      "ground_truth": "1\\pmod{6}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18782,
+      "teacher_answer": "\\frac{a^2}{72}(27\\pi-8\\sqrt{6})",
+      "ground_truth": "\\frac{^{2}}{72}(27\\pi-8\\sqrt{6})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18798,
+      "teacher_answer": "45°, 45°, 90°",
+      "ground_truth": "45,45,90",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18819,
+      "teacher_answer": "{0}",
+      "ground_truth": "M \\cap N=\\{0\\}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18822,
+      "teacher_answer": "a ≤ 1 or a ≥ 9",
+      "ground_truth": "\\in(-\\infty,1]\\cup[9,\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18843,
+      "teacher_answer": "(3,2)",
+      "ground_truth": "P(3,2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18846,
+      "teacher_answer": "a < 0",
+      "ground_truth": "\\in(-\\infty;0)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 18880,
+      "teacher_answer": "\\(\\frac{1}{(1+\\cos t)^2}\\)",
+      "ground_truth": "\\frac{1}{(1+\\cos)^{2}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19025,
+      "teacher_answer": "(4, 2)",
+      "ground_truth": "(,b)=(4,2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19076,
+      "teacher_answer": "\\(h \\cot \\frac{\\alpha}{2}\\)",
+      "ground_truth": "\\operatorname{ctg}\\frac{\\alpha}{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19083,
+      "teacher_answer": "(2,2), \\left(\\frac{\\sqrt[4]{286}}{4}, \\sqrt[4]{286}\\right)",
+      "ground_truth": "(2;2),(\\frac{\\sqrt[4]{286}}{4};\\sqrt[4]{286})",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19123,
+      "teacher_answer": "f(x) = 0 for all x ∈ ℝ, and f(x) = x for all x ∈ ℝ",
+      "ground_truth": "f(x)\\equiv0f(x)=x",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19139,
+      "teacher_answer": "a = 1, b any positive integer",
+      "ground_truth": "(1,b)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19142,
+      "teacher_answer": "√15 : √7",
+      "ground_truth": "\\frac{\\sqrt{15}}{\\sqrt{7}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19169,
+      "teacher_answer": "When flipping the coin 10 times.",
+      "ground_truth": "In\\\\series\\of\\10\\tosses",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19182,
+      "teacher_answer": "(-\\infty, -2) \\cup (-1, 0) \\cup (3, \\infty)",
+      "ground_truth": "(-\\infty;-2)\\cup(-1;0)\\cup(3;+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19213,
+      "teacher_answer": "36°, 36°, 108°",
+      "ground_truth": "36,36,108",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19221,
+      "teacher_answer": "\\(m > -3\\)",
+      "ground_truth": "\\in(-3,+\\infty)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19254,
+      "teacher_answer": "(3/2, √2/3)",
+      "ground_truth": "\\left(\\frac{3}{2}, \\frac{\\sqrt{2}}{3}\\right)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19299,
+      "teacher_answer": "Maximum: 1, Minimum: -1",
+      "ground_truth": "Themaximumvalueofthefunctionfis1,theminimumvalueis-1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19315,
+      "teacher_answer": "29, 31, 33, ..., 87",
+      "ground_truth": "29,31,33,\\ldots,87",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19337,
+      "teacher_answer": "a\\sqrt{5+2\\sqrt{5}}",
+      "ground_truth": "\\sqrt{5+2\\sqrt{5}}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19355,
+      "teacher_answer": "$f(n)=n^2$",
+      "ground_truth": "f(n) = n^2 \\quad \\forall n \\in \\mathbb{N}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19366,
+      "teacher_answer": "\\sum_{m=0}^{n} (-1)^m \\binom{n}{m} 2^m (3n-m)!",
+      "ground_truth": "\\sum_{k=0}^{n}(-1)^{k}\\binom{n}{k}2^{k}(3n-k)!",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19373,
+      "teacher_answer": "\\left\\lfloor\\frac{n-1}{3}\\right\\rfloor",
+      "ground_truth": "[\\frac{n-1}{3}]",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19374,
+      "teacher_answer": "For prime $n$, the smallest $d$ is $n-1$; for composite $n$, no such $d$ exists.",
+      "ground_truth": "d = n-1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19417,
+      "teacher_answer": "(4, -5), (-2, -1)",
+      "ground_truth": "(4,-5)\\text{}(-2,-1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19420,
+      "teacher_answer": "x = 1/2, y = 1/2, z = 3/4",
+      "ground_truth": "\\frac{1}{2},\\frac{1}{2},\\frac{3}{4}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19434,
+      "teacher_answer": "The angles of the trapezoid are 30°, 150°, 150°, 30°.",
+      "ground_truth": "30,150,150,30",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19445,
+      "teacher_answer": "√7/8",
+      "ground_truth": "\\frac{\\sqrt{7}}{8}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19458,
+      "teacher_answer": "AE = 6, EC = 4, DE = 6",
+      "ground_truth": "6,4,6",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19505,
+      "teacher_answer": "{a, 2a} where a is a positive integer",
+      "ground_truth": "{,2a}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19507,
+      "teacher_answer": "\\(\\frac{1}{n+1}\\binom{2n}{n}\\)",
+      "ground_truth": "A_{n}=\\frac{1}{n+1} \\mathrm{C}_{2 n}^{n}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19573,
+      "teacher_answer": "\\((0, 1)\\) and \\((2, -1)\\)",
+      "ground_truth": "\\begin{pmatrix}0;&1\\\\2;&-1\\end{pmatrix}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19585,
+      "teacher_answer": "[3, ∞)",
+      "ground_truth": "x\\geq3",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19596,
+      "teacher_answer": "a) \\(2 \\max(|\\alpha|, |\\beta|)\\); b) \\(2\\sqrt{\\alpha^2 + \\beta^2}\\)",
+      "ground_truth": "2\\sqrt{2} \\sqrt{\\alpha^2 + \\beta^2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19601,
+      "teacher_answer": "8 and -1",
+      "ground_truth": "8-1",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19607,
+      "teacher_answer": "(2,3) and (3,2)",
+      "ground_truth": "p=2,q=3orp=3,q=2",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19621,
+      "teacher_answer": "√6",
+      "ground_truth": "\\sqrt{6}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19623,
+      "teacher_answer": "2000, 3500, 6500",
+      "ground_truth": "Ivanhad2000kn,Josip3500kn,Tomislav6500kn",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19647,
+      "teacher_answer": "\\(n < \\frac{2}{3}\\)",
+      "ground_truth": "n \\in\\left(-\\infty, \\frac{2}{3}\\right)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19656,
+      "teacher_answer": "All real numbers between 1 and 2, excluding the endpoints.",
+      "ground_truth": "(1,2)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19662,
+      "teacher_answer": "\\(A_1 < A_2 < A_3\\)",
+      "ground_truth": "1:\\sqrt{2}:\\sqrt{3}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19736,
+      "teacher_answer": "(2,4,8) and (3,5,15)",
+      "ground_truth": "2,4,8;or3,5,15",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19741,
+      "teacher_answer": "√2",
+      "ground_truth": "\\sqrt{2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19742,
+      "teacher_answer": "$-14 \\le b < 9$",
+      "ground_truth": "b\\in[-14;9)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19743,
+      "teacher_answer": "-10, -7, -6, -5, -1, 0, 2",
+      "ground_truth": "\\in{-10,-7,-6,-5,-1,0,2}",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19816,
+      "teacher_answer": "$P(x) = a(x^2+x) + c$ for any real numbers $a$ and $c$.",
+      "ground_truth": "P(x) = kx^2 + kx + c",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19916,
+      "teacher_answer": "-7 < m < 1",
+      "ground_truth": "m \\in(-7,1)",
+      "method": "regex_number_match"
+    },
+    {
+      "index": 19937,
+      "teacher_answer": "[1, +∞)",
+      "ground_truth": "[1,+\\infty)",
+      "method": "regex_number_match"
+    }
+  ]
+}

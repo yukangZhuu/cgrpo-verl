@@ -1,0 +1,46 @@
+{
+  "input_file": "/Users/yukangzhu/Projects/cgrpo-verl/data/teacher_traces_new/teacher_traces.jsonl",
+  "output_file": "/Users/yukangzhu/Projects/cgrpo-verl/data/teacher_traces_new/candidates_stage1.jsonl",
+  "total_input": 16559,
+  "total_kept": 11303,
+  "total_removed": 5256,
+  "keep_rate": "68.3%",
+  "filter_config": {
+    "min_steps": 6,
+    "max_steps": 14,
+    "max_question_chars": 500,
+    "max_steps_total_chars": 2800,
+    "min_step_chars": 20,
+    "max_step_ratio": 5.0
+  },
+  "removal_breakdown": {
+    "steps_out_of_range": 2518,
+    "question_too_long": 1071,
+    "steps_too_long": 889,
+    "answer_not_verified": 472,
+    "quality:step_imbalanced": 160,
+    "quality:step_too_short": 82,
+    "multi_part_answer": 61,
+    "duplicate": 2,
+    "missing_fields": 1
+  },
+  "verify_method_breakdown": {
+    "exact_match": 7670,
+    "math_verify_full": 2010,
+    "latex_wrapped_match": 1432,
+    "no_match": 472,
+    "expr_match": 184,
+    "numeric_match": 7
+  },
+  "kept_steps_distribution": {
+    "6": 1776,
+    "7": 2051,
+    "8": 2108,
+    "9": 1728,
+    "10": 1469,
+    "11": 890,
+    "12": 641,
+    "13": 387,
+    "14": 253
+  }
+}

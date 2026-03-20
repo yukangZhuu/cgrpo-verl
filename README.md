@@ -94,7 +94,7 @@ Curriculum Manager 维护当前难度级别 `k`，并根据成功率动态调整
 | `verl/utils/curriculum.py`                              | **CurriculumManager** - 管理课程学习进度、EMA成功率跟踪、动态阈值、状态持久化 |
 | `verl/utils/dataset/curriculum_dataset.py`              | **CurriculumGRPODataset** - 加载 Teacher Traces 数据、动态 Prompt 构建        |
 | `verl/workers/reward_manager/cgrpo.py`                  | **CurriculumGRPORewardManager** - 基于最终答案正确性计算奖励                  |
-| `verl/experimental/agent_loop/curriculum_agent_loop.py` | **CurriculumAgentLoop** - 处理 curriculum-aware 的生成（⚠️ WIP）              |
+| `verl/experimental/agent_loop/curriculum_agent_loop.py` | **CurriculumAgentLoop** - 处理 curriculum-aware 的生成              |
 | `verl/trainer/cgrpo_trainer.py`                         | **CurriculumGRPOTrainer** - 扩展 RayPPOTrainer，集成 curriculum 更新逻辑      |
 | `verl/trainer/main_cgrpo.py`                            | C-GRPO 训练主入口                                                             |
 | `verl/trainer/config/cgrpo_trainer.yaml`                | Hydra 配置文件                                                                |
