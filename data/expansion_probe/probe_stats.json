@@ -1,0 +1,30 @@
+{
+  "description": "Expansion Probe: 100 Impossible (pass@32=0) problems, stratified by step count",
+  "source": "/Users/yukangzhu/Projects/cgrpo-verl/data/expansion_probe/candidates_merged.jsonl",
+  "seed": 42,
+  "total_impossible_pool": 1272,
+  "selected": 100,
+  "selection_criteria": "pass@32 = 0 (pass_rate=0, pass_count=0)",
+  "stratification": "approximately uniform across step counts (6-14)",
+  "steps_distribution": {
+    "6": 12,
+    "7": 11,
+    "8": 11,
+    "9": 11,
+    "10": 11,
+    "11": 11,
+    "12": 11,
+    "13": 11,
+    "14": 11
+  },
+  "question_char_len": {
+    "min": 70,
+    "max": 478,
+    "mean": 281.1
+  },
+  "steps_total_char_len": {
+    "min": 556,
+    "max": 2764,
+    "mean": 1884.9
+  }
+}

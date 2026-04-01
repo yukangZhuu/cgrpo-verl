@@ -1,44 +1,71 @@
-# Quick Validation Plan: Detailed Experiment Configuration
+# Quick Validation Plan
 
-**Purpose**: Before committing to the full 9-week experimental campaign, run 3 lightweight experiments (3-5 days total) to validate the core thesis that curriculum RL with teacher traces can expand reasoning boundaries beyond pure RL.
+**Purpose**: Before committing to the full experiment matrix, run 2 targeted experiments to validate:
+1. Teacher guidance actually unlocks unsolvable problems (the unlock effect is real)
+2. Curriculum RL on unlocked unsolvable problems produces a meaningful training signal
+
+**Context**: [Research_Plan.md](Research_Plan.md) (full study design)
 
 ---
 
-## QV1: Curriculum GRPO vs Pure GRPO at Large Pass@k
+## Step 0: Pre-Training Profiling (Inference Only)
+
+Before any training, we run a cheap profiling experiment that becomes a key figure in the paper.
+
+### The Unlock Curve
+
+**Setup**:
+- Select 100 unsolvable problems (pass@32 = 0) from the pool of 1,272
+- For each problem, evaluate pass@8 at 5 guidance levels:
+  - g = 0.0 (no guidance — should be ~0 by definition)
+  - g = 0.25 (reveal first 25% of teacher steps)
+  - g = 0.50
+  - g = 0.75
+  - g = 1.0 (reveal all steps except the last)
+- Test in **prefix mode**: teacher steps prepended as prefix inside think tag
+- Optionally also test **hint mode**: teacher steps as structured hints in prompt
+
+**Evaluation**: For each (problem, guidance_level) pair, generate 8 responses with temperature=1.0, check answer correctness.
+
+**Expected output**: A plot with guidance level on x-axis, average success rate on y-axis. The curve should rise from ~0 at g=0 to a substantial value (e.g., 0.3-0.7) at g=0.75-1.0.
+
+**Success criterion**: The curve is monotonically increasing and reaches at least 0.2 average success rate at g=0.75. This confirms that teacher guidance genuinely transforms unsolvable problems into learnable states.
+
+**Failure mode**: If the curve stays near zero even at g=1.0, then either:
+- Teacher traces are too misaligned with the student model → try a closer teacher (e.g., Qwen3-8B)
+- The response length is insufficient → increase max_response_length
+- The problems are fundamentally beyond the model's capacity even with help
+
+**Cost**: 100 problems x 5 levels x 8 samples = 4,000 generations. ~1-2 hours with vLLM.
+
+---
+
+## QV-A: Baseline GRPO on Standard Training Set
 
 ### Objective
 
-Validate that teacher-guided curriculum RL produces higher pass@k at large k than standard GRPO. This is the minimum viable signal for our thesis.
+Establish what standard GRPO achieves on a randomly sampled mixed-difficulty dataset — the comparison anchor for all subsequent experiments.
 
-### Data Preparation
+### Data
 
-From the merged 11,303-sample pool (`candidates_merged.jsonl`), construct:
+Follow the data construction procedure from Research_Plan.md Section 4.3:
+1. Randomly sample 3,000 problems from the pool (seed=42) → **Standard Training Set**
+2. From the remaining pool, stratified-sample 500 problems → **Test Set** (including ~57 unsolvable)
+3. Record the natural difficulty distribution of the Standard Training Set (expect ~337 unsolvable problems within it)
 
-**Training set (800 samples)**:
-- Difficulty filter: Medium + Hard + partial Easy (0.05 < pass@32 <= 0.7)
-- Steps range: [6, 12] (well within our dataset)
-- Stratified by steps count: ~90 samples per step bin (6-12, 7 bins)
-- Avoid Trivial (base model can already solve) and Impossible (no signal even with teacher)
-- Fixed random seed for reproducibility
-
-**Test set (200 samples)**:
-- From remaining pool, matching difficulty distribution
-- Ensure no overlap with training set
-- Include ~30 "impossible" samples (pass@32 = 0) for QV2
-
-### Model A: Standard GRPO (No Teacher Traces)
+### Training Config
 
 ```yaml
-# Training Configuration
 model: Qwen3-1.7B (base)
-algorithm: GRPO
+algorithm: GRPO (standard, no teacher guidance, no curriculum)
 data:
-  train_size: 800
+  train_path: <mixed_3000.jsonl>
+  train_size: 3000
   max_prompt_length: 1024
-  max_response_length: 1024
+  max_response_length: 4096
 actor_rollout_ref:
   rollout:
-    n: 8                    # 8 rollouts per prompt for GRPO
+    n: 8
     temperature: 1.0
     top_p: 0.95
   actor:
@@ -46,224 +73,131 @@ actor_rollout_ref:
       lr: 5e-7
     use_kl_loss: true
     kl_loss_coef: 0.001
-    ppo_mini_batch_size: 16
+    ppo_mini_batch_size: 32
     ppo_micro_batch_size_per_gpu: 4
   ref:
     fsdp_config:
       param_offload: true
 trainer:
-  total_epochs: 3           # ~75 steps/epoch * 3 = 225 steps
-  n_gpus_per_node: 1
+  total_epochs: 3
+  n_gpus_per_node: 4
 ```
 
-No teacher traces, no curriculum. Standard GRPO on the 800 problems with reward based on final answer correctness.
+### Post-Training Diagnostic
 
-### Model B: Curriculum GRPO with Per-Sample Adaptive Dosage (Prefix Mode)
+After training completes, re-evaluate the ~80 unsolvable test problems with pass@32. Record how many (if any) become solvable. This validates the "waste hypothesis": if most remain unsolvable, standard GRPO indeed cannot learn from beyond-boundary problems.
+
+### Success Criteria
+
+- Training completes without collapse
+- pass@1 on test set improves over base model
+- Most unsolvable test problems remain unsolvable (validating the waste hypothesis)
+
+---
+
+## QV-B: Curriculum RL on Unsolvable Subset (Prefix Mode)
+
+### Objective
+
+Test whether curriculum RL on teacher-guided unsolvable problems produces a meaningful training signal and competitive evaluation results.
+
+### Data
+
+From the 3,000-problem Standard Training Set constructed in QV-A, extract all problems with pass@32 = 0 → **Unsolvable Subset** (~337 problems). These are a strict subset of QV-A's training data. Each has teacher traces with explicit step boundaries. Same 500-problem test set as QV-A.
+
+### Training Config
 
 ```yaml
-# Same base config as Model A, plus:
+model: Qwen3-1.7B (base)
+algorithm: Curriculum-GRPO (per-sample adaptive)
+data:
+  train_path: <unsolvable_subset.jsonl>
+  train_size: ~337
+  max_prompt_length: 1024
+  max_response_length: 4096
 curriculum:
-  mode: per_sample_adaptive      # AdaBack-style per-sample rho
-  teacher_mode: prefix           # Inject teacher steps as prefix in <think> tag
-  tau: 0.5                       # Balanced reward threshold
-  p_zero: 0.1                   # 10% probability of forcing rho=0 (no teacher)
-  rho_init_min: 0.0             # Initial rho interval: [0, 1]
+  mode: per_sample_adaptive
+  teacher_mode: prefix
+  tau: 0.5
+  p_zero: 0.1
+  rho_init_min: 0.0
   rho_init_max: 1.0
-  ema_decay_global: 0.99        # EMA for global rho averages (for new samples)
-
-# Per-sample state (maintained across epochs):
-#   For each sample i:
-#     rho_min_i, rho_max_i: supervision ratio interval
-#     rho_i: current supervision ratio (sampled from interval)
-#
-# Update rule after each encounter with sample i:
-#   avg_reward_i = mean(rewards across n rollouts for sample i)
-#   if avg_reward_i < tau:
-#       rho_min_i = rho_i          (increase supervision next time)
-#   if avg_reward_i >= tau:
-#       rho_max_i = rho_i          (decrease supervision next time)
-#       rho_min_i = 0.0            (allow full generation)
-#   rho_i ~ Uniform(rho_min_i, rho_max_i)
-#
-# Step-aware discretization:
-#   steps_to_reveal = floor(rho_i * num_steps_i)
-#   teacher_prefix = steps[0 : steps_to_reveal]
+actor_rollout_ref:
+  rollout:
+    n: 8
+    temperature: 1.0
+    top_p: 0.95
+  actor:
+    optim:
+      lr: 5e-7
+    use_kl_loss: true
+    kl_loss_coef: 0.001
+    ppo_mini_batch_size: 32
+    ppo_micro_batch_size_per_gpu: 4
+  ref:
+    fsdp_config:
+      param_offload: true
+trainer:
+  total_epochs: 50    # 337/64 ≈ 5.3 steps/epoch x 50 ≈ 265 steps
+  n_gpus_per_node: 4
 ```
 
-Same training budget (3 epochs, 225 steps), same 800 problems, same hyperparameters. The only difference is the curriculum mechanism that dynamically reveals teacher reasoning steps.
+### Monitoring During Training
 
-### Evaluation Protocol
-
-For both models, evaluate on the 200-problem test set:
-
-```yaml
-evaluation:
-  method: pass_at_k
-  k_values: [1, 4, 16, 64]
-  num_samples_per_problem: 64    # Generate 64 solutions per problem
-  temperature: 1.0
-  top_p: 0.95
-  max_response_length: 1024
-  no_teacher_prefix: true        # Always evaluate without teacher assistance
-  reward: boxed_answer_match     # Same as training reward
-```
-
-Also evaluate the base model (no training) with the same protocol as a reference.
-
-### Success Criteria
-
-- **Primary**: Model B (curriculum GRPO) achieves higher pass@64 than Model A (pure GRPO) on the test set
-- **Secondary**: Model B achieves higher pass@64 than the base model (boundary expansion)
-- **Bonus**: Model B achieves higher pass@64 even on the Hard + Impossible subsets
-
-### Expected Runtime
-
-- Training Model A: ~2 hours (225 steps * ~30s/step on 1x H800)
-- Training Model B: ~2.5 hours (slightly longer due to curriculum overhead)
-- Evaluation (3 models * 200 problems * 64 samples): ~3-4 hours with vLLM
-- Total: ~1 day including data preparation
-
----
-
-## QV2: Does the Trained Model Solve "Impossible" Problems?
-
-### Objective
-
-Test whether curriculum RL enables the model to solve problems that the base model literally cannot solve (pass@32 = 0 in our difficulty scoring). This is the strongest possible evidence for genuine reasoning boundary expansion.
-
-### Setup
-
-- Use Model B from QV1 (already trained)
-- Identify all test set problems with base model pass@32 = 0 (~30 problems in 200-problem test set)
-- Generate 64 solutions for each from Model B
+Log per step:
+- Mean rho across all samples (should gradually decrease)
+- Batch reward (should gradually increase)
+- Number of samples with rho < 0.1 (approaching independence)
+- Number of samples still at rho > 0.8 (still heavily guided)
 
 ### Evaluation
 
-```yaml
-evaluation:
-  target: impossible_subset      # Problems where base model pass@32 = 0
-  method: pass_at_k
-  k_values: [1, 4, 16, 32, 64]
-  num_samples_per_problem: 64
-  temperature: 1.0
-  no_teacher_prefix: true
-```
-
-Additionally evaluate Model A (pure GRPO) on the same subset for comparison.
+Same protocol as QV-A: pass@k (k=1,4,16,64) on the 500-problem test set, **zero-guidance** (no prefix, no hints).
 
 ### Success Criteria
 
-- **Primary**: Model B achieves pass@64 > 0 on at least 5% of "impossible" problems (i.e., finds at least 1 correct solution in 64 attempts for problems the base model never solved in 32 attempts)
-- **Strong signal**: Model B achieves pass@64 > 0 on 10%+ of "impossible" problems
-- **Comparison**: Model B solves more "impossible" problems than Model A
+**Primary (Go for full grid)**:
+- QV-B pass@1 on test set is competitive with QV-A (within ~80% of QV-A's score), despite using only ~11% of the training data
+- Mean rho decreases during training (curriculum is progressing)
+- At least some previously-unsolvable test problems become solvable
 
-### Analysis
+**Strong signal**:
+- QV-B pass@1 matches or exceeds QV-A
+- QV-B pass@64 exceeds QV-A (boundary expansion signal)
+- 5%+ of unsolvable test problems become solvable (the model learns to solve problems it previously could not)
 
-For any "impossible" problem that Model B solves:
-- Decode and inspect the correct solution
-- Compare with the teacher's reasoning trace
-- Assess whether the solution follows the teacher's reasoning pattern (suggesting distillation effect) or uses a novel approach (suggesting RL exploration)
-
-### Expected Runtime
-
-- No additional training needed (reuse Model B from QV1)
-- Evaluation: ~30 minutes (small subset)
+**Bonus**:
+- QV-B outperforms QV-A on external benchmarks (AIME/MATH-500)
 
 ---
 
-## QV3: Prefix Mode vs Hint Mode Quick Comparison
+## Decision Matrix
 
-### Objective
-
-Test whether the form of teacher guidance (prefix injection vs hint in prompt) affects reasoning boundary expansion. This validates that our teacher guidance approach works and helps determine which mode to prioritize in the full experimental plan.
-
-### Model C: Curriculum GRPO with Hint Mode
-
-```yaml
-# Same as Model B, except:
-curriculum:
-  teacher_mode: hint             # Teacher steps as hints in prompt, not prefix in <think>
-  # All other curriculum parameters identical to Model B
-```
-
-**Hint mode prompt construction** (for a problem with 7 steps, rho=0.57, revealing 4 steps):
-
-```
-System: You are an expert mathematician. Think step by step.
-
-User: [Question text]
-
-Below are some reasoning hints that may help you solve this problem:
-- Hint 1: [Teacher Step 1]
-- Hint 2: [Teacher Step 2]
-- Hint 3: [Teacher Step 3]
-- Hint 4: [Teacher Step 4]
-
-Use these hints to guide your reasoning, but work through the solution
-in your own words. Show your full reasoning in <think>...</think> tags
-and put your final answer in \boxed{}.
-```
-
-Key differences from prefix mode:
-- Student always generates the FULL `<think>...</think>` block independently
-- Teacher knowledge is in the prompt (input), not in the output
-- As rho decreases, fewer hints are provided; at rho=0, no hints at all
-
-### Training
-
-- Same 800 training samples, same 3 epochs, same hyperparameters
-- Same per-sample adaptive curriculum (tau=0.5, p_zero=0.1)
-- Only the teacher guidance injection method differs
-
-### Evaluation
-
-Same protocol as QV1: pass@k at k=1,4,16,64 on the 200-problem test set, always without teacher assistance.
-
-### Success Criteria
-
-- **Primary**: At least one mode (prefix or hint) shows clear boundary expansion (pass@64 > base model)
-- **Informative**: If both modes expand boundary, compare which expands more
-- **Negative signal**: If hint mode significantly underperforms prefix mode, it may indicate that 1.7B models cannot effectively follow hint-based instructions
-
-### Expected Runtime
-
-- Training Model C: ~2.5 hours
-- Evaluation: ~1 hour (only Model C, since base and Model A/B are already evaluated)
-- Total: ~0.5 day
+| Step 0 Unlock Curve | QV-B vs QV-A | Decision |
+|---------------------|-------------|----------|
+| Curve rises clearly | QV-B competitive or better | Proceed to full grid (Research_Plan.md Section 5) |
+| Curve rises clearly | QV-B significantly worse | Try hint mode as QV-C; increase epochs; check if curriculum is too aggressive |
+| Curve is flat | - | Teacher trace quality issue. Try closer teacher model or different trace format before proceeding |
 
 ---
 
-## Summary: Decision Matrix After Quick Validation
+## Expected Timeline
 
-| QV1 Result | QV2 Result | QV3 Result | Decision |
-|-----------|-----------|-----------|----------|
-| B > A at pass@64 | Solves impossible problems | Both modes work | Full plan proceeds as designed |
-| B > A at pass@64 | Solves impossible problems | Only prefix works | Full plan proceeds; drop hint mode experiments |
-| B > A at pass@64 | No impossible solved | Either mode works | Proceed but reframe as "boundary improvement" not "boundary expansion" |
-| B = A at pass@64 | - | - | Investigate why; check if longer training (more epochs) helps before pivoting |
-| B < A at pass@64 | - | - | Pivot to investigation paper: "Why does curriculum RL fail to expand reasoning?" |
+| Step | Duration |
+|------|----------|
+| Step 0: Unlock curve profiling | ~0.5 day |
+| Data construction (mixed set, unsolvable set, test set) | ~0.5 day |
+| QV-A training + evaluation | ~1 day |
+| QV-B training + evaluation | ~1 day |
+| Analysis and go/no-go decision | ~0.5 day |
+| **Total** | **~3-4 days** |
 
-## Fallback Directions (If Validation Fails)
+---
 
-### If QV1 Fails (Curriculum RL does NOT outperform pure GRPO at large k)
+## What QV Does NOT Include
 
-**Diagnosis experiments**:
-1. Check if the curriculum-trained model has higher pass@1 but lower pass@64 → confirms it learned "completion" not "reasoning" (this itself is a publishable finding)
-2. Run prefix perturbation study → directly tests whether model learned teacher-dependent completion
-3. Check training dynamics: does per-sample rho converge to 0 (model stops needing teacher) or plateau at high values (model stays dependent)?
-
-**Pivot options**:
-- Paper reframed as: "Curriculum RL teaches completion, not reasoning: an empirical investigation" — focuses on the diagnostic experiments as the contribution
-- Alternative: try SFT warmup (10% of teacher traces) + curriculum RL (remaining 90% with RL) to seed initial reasoning patterns
-
-### If QV2 Fails (No impossible problems become solvable)
-
-The boundary may expand slightly (more problems solved at higher success rate) without dramatic new capability acquisition. Reframe:
-- "Curriculum RL as efficient alternative to full distillation" — achieves comparable boundary expansion with less teacher data and more generalization
-- Focus on sample efficiency: how much teacher knowledge is needed to match pure SFT?
-
-### If QV3 Shows Both Modes Fail
-
-Teacher trace quality or format may be incompatible with the student model:
-- Try generating teacher traces with a closer model (Qwen3-8B instead of DeepSeekV3.2) to reduce style gap
-- Try a hybrid: SFT on a small subset of full traces first, then curriculum RL
+- Hint mode (reserved for main grid C2)
+- Static/global curriculum (reserved for main grid C3, C4)
+- Solvable-hard control (reserved for main grid S1)
+- Qwen3-0.6B (reserved for scale transfer)
+- Reproducibility runs (reserved for final phase)
