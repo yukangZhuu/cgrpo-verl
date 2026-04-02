@@ -88,10 +88,60 @@ By guidance level:
   g=0.75:  330 instances, avg guidance_steps=6.7, avg student_steps=2.3
   g=1.00:  330 instances, avg guidance_steps=7.9, avg student_steps=1.0
 
-## 5. Output Files
+## 5. Validation Set (300)
+
+Stratified sample from the remaining pool (8,303 problems after removing the 3k training set).
+Disjoint from training set and test set. Used for training monitoring and checkpoint selection.
+**Evaluation protocol: zero-guidance (no teacher prefix/hints), identical across all experiments.**
+
+| Category | Count | % |
+|----------|-------|---|
+| Trivial (>0.8) | 111 | 37.0% |
+| Easy (0.3-0.8) | 88 | 29.3% |
+| Medium (0.05-0.3) | 54 | 18.0% |
+| Hard (0<p<=0.05) | 13 | 4.3% |
+| Unsolvable (p=0) | 34 | 11.3% |
+
+Mean pass_rate: 0.5497, Steps: mean=8.7
+
+## 6. Test Set (500)
+
+Stratified sample from the remaining pool, disjoint from both training and validation sets.
+Used only for final results reporting.
+**Evaluation protocol: zero-guidance, identical across all experiments.**
+
+| Category | Count | % |
+|----------|-------|---|
+| Trivial (>0.8) | 186 | 37.2% |
+| Easy (0.3-0.8) | 146 | 29.2% |
+| Medium (0.05-0.3) | 89 | 17.8% |
+| Hard (0<p<=0.05) | 22 | 4.4% |
+| Unsolvable (p=0) | 57 | 11.4% |
+
+Mean pass_rate: 0.5422, Steps: mean=8.8
+
+The 57 unsolvable test problems directly measure **boundary expansion**: how many previously-unsolvable problems become solvable after training.
+
+## 7. Data Partition Summary
+
+```
+Pool: 11,303
+  ├── Training:   3,000 (random, seed=42)
+  │     └── Unsolvable subset: 330 (pass_rate=0)
+  │           └── Expanded: 1,980 (6 guidance levels)
+  ├── Validation:   300 (stratified, disjoint)
+  ├── Test:         500 (stratified, disjoint)
+  └── Unused:     7,503
+```
+
+All three splits are mutually disjoint (verified: 0 overlapping indices between any pair).
+
+## 8. Output Files
 
 | File | Description | Count |
 |------|-------------|-------|
-| `standard_train_3k.jsonl` | Randomly sampled standard training set | 3000 |
+| `standard_train_3k.jsonl` | Randomly sampled standard training set | 3,000 |
 | `unsolvable_subset.jsonl` | Unsolvable problems (pass_rate=0) from standard set | 330 |
-| `unsolvable_expanded.jsonl` | Guidance-expanded unsolvable set | 1980 |
+| `unsolvable_expanded.jsonl` | Guidance-expanded unsolvable set | 1,980 |
+| `val_300.jsonl` | Stratified validation set (zero-guidance eval) | 300 |
+| `test_500.jsonl` | Stratified test set (zero-guidance eval) | 500 |
