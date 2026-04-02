@@ -1,6 +1,7 @@
 #!/bin/bash
-# B2: Standard GRPO on 3k mixed training set (baseline)
-# No teacher guidance — guidance_mode=none
+# Smoke test: ~10 training steps, validate every 5, debug dump every 5.
+# Uses a tiny slice of data (160 samples → 10 steps at batch_size=16).
+# Console-only logging (no wandb).
 # Hardware: single A800 80GB
 set -x
 
@@ -24,13 +25,15 @@ python3 -m verl.trainer.main_cgrpo \
     algorithm.adv_estimator=grpo \
     data.train_files=$TRAIN_DATA \
     $VAL_ARG \
-    data.train_batch_size=32 \
-    data.max_prompt_length=1024 \
-    data.max_response_length=4096 \
+    data.train_batch_size=16 \
+    data.train_max_samples=160 \
+    data.val_max_samples=32 \
+    data.max_prompt_length=2048 \
+    data.max_response_length=8192 \
     data.guidance_mode=none \
     \
-    actor_rollout_ref.rollout.prompt_length=1024 \
-    actor_rollout_ref.rollout.response_length=4096 \
+    actor_rollout_ref.rollout.prompt_length=2048 \
+    actor_rollout_ref.rollout.response_length=8192 \
     \
     data.filter_overlong_prompts=True \
     data.truncation='error' \
@@ -55,7 +58,7 @@ python3 -m verl.trainer.main_cgrpo \
     actor_rollout_ref.rollout.n=8 \
     actor_rollout_ref.rollout.temperature=1.0 \
     actor_rollout_ref.rollout.top_p=0.95 \
-    actor_rollout_ref.rollout.max_num_batched_tokens=16384 \
+    actor_rollout_ref.rollout.max_num_batched_tokens=8192 \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=16 \
     actor_rollout_ref.ref.fsdp_config.param_offload=True \
     \
@@ -63,17 +66,17 @@ python3 -m verl.trainer.main_cgrpo \
     algorithm.norm_adv_by_std_in_grpo=True \
     \
     trainer.critic_warmup=0 \
-    trainer.logger='["console","wandb"]' \
-    trainer.project_name='cgrpo_unsolvable' \
-    trainer.experiment_name='B2_baseline_grpo_3k' \
-    trainer.default_local_dir=checkpoints/B2_baseline_grpo_3k \
+    trainer.logger='["console"]' \
+    trainer.project_name='cgrpo_test' \
+    trainer.experiment_name='smoke_test' \
+    trainer.default_local_dir=checkpoints/smoke_test \
     trainer.n_gpus_per_node=1 \
     trainer.nnodes=1 \
-    trainer.save_freq=50 \
-    trainer.test_freq=20 \
-    trainer.total_epochs=3 \
+    trainer.save_freq=0 \
+    trainer.test_freq=5 \
+    trainer.total_epochs=1 \
     trainer.val_before_train=False \
-    trainer.debug_dump_freq=20 \
-    trainer.debug_dump_dir=debug_samples/B2 \
-    trainer.debug_dump_num_samples=10 \
+    trainer.debug_dump_freq=5 \
+    trainer.debug_dump_dir=debug_samples/smoke_test \
+    trainer.debug_dump_num_samples=5 \
     $@
