@@ -70,34 +70,34 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
     def __call__(self, data: Any, return_dict: bool = False, **kwargs) -> Any:
         """
         Compute rewards for a batch of data.
-        
-        Args:
-            data: DataProto containing batch data.
-            return_dict: Whether to return dict with extra info.
-            **kwargs: Additional arguments.
-        
-        Returns:
-            Reward tensor and optionally extra info dict.
+
+        When ``return_dict=True`` (used by the parent trainer's validation path),
+        returns a **dict** ``{"reward_tensor": ..., "reward_extra_info": ...}``
+        to match the interface expected by ``RayPPOTrainer._compute_reward_legacy``.
+
+        When ``return_dict=False``, returns a **tuple** ``(reward_tensor, extra_info)``.
         """
-        if hasattr(data, 'batch'):
-            return self._compute_batch_reward(data, return_dict=return_dict)
-        else:
+        if not hasattr(data, "batch"):
             raise ValueError(f"Unsupported data type: {type(data)}")
+
+        reward_tensor, extra_info = self._compute_batch_reward(data)
+
+        if return_dict:
+            return {
+                "reward_tensor": reward_tensor,
+                "reward_extra_info": extra_info,
+            }
+        return reward_tensor, extra_info
     
     def _compute_batch_reward(
         self,
         data: Any,
-        return_dict: bool = False,
-    ) -> tuple[torch.Tensor, dict] | torch.Tensor:
+    ) -> tuple[torch.Tensor, dict]:
         """
         Compute rewards for a batch.
-        
-        Args:
-            data: DataProto with batch data.
-            return_dict: Whether to return extra info.
-        
+
         Returns:
-            Reward tensor or tuple of (reward_tensor, extra_info_dict).
+            Tuple of (reward_tensor, extra_info_dict).
         """
         batch = data.batch
         non_tensor_batch = data.non_tensor_batch
@@ -186,9 +186,7 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
                 extra_info["failure_reasons"][:self.num_examine],
             )
         
-        if return_dict:
-            return reward_tensor, extra_info
-        return reward_tensor
+        return reward_tensor, extra_info
     
     def _decode_responses(
         self,

@@ -111,7 +111,7 @@ verl/trainer/main_cgrpo.py
     │   ├── verl/utils/dataset/curriculum_dataset.py (CurriculumGRPODataset)
     │   └── verl/workers/reward_manager/cgrpo.py (CurriculumGRPORewardManager)
     │
-    └── verl/experimental/agent_loop/curriculum_agent_loop.py (CurriculumAgentLoop) ⚠️ WIP
+    └── verl/experimental/agent_loop/curriculum_agent_loop.py (CurriculumAgentLoop)
 ```
 
 ---
