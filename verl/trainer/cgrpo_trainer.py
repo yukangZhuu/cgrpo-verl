@@ -20,6 +20,7 @@ Guidance mode and per-sample g_level are read from the data; no dynamic scheduli
 import json
 import logging
 import os
+import time
 from typing import Optional
 
 import numpy as np
@@ -87,6 +88,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             ema_alpha=self.config.trainer.get("ema_alpha", 0.1),
         )
         self.guidance_mode = self.config.data.get("guidance_mode", "none")
+        self._training_start_time = None
 
         logger.info(
             f"CurriculumGRPOTrainer initialized, guidance_mode={self.guidance_mode}"
@@ -124,6 +126,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             desc="CGRPO Training",
         )
 
+        self._training_start_time = time.time()
         self.global_steps += 1
 
         for epoch in range(current_epoch, self.config.trainer.total_epochs):
@@ -245,6 +248,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     {"sr": f"{batch_success_rate:.3f}", "mode": self.guidance_mode}
                 )
 
+                self._save_progress(epoch=epoch, batch_sr=batch_success_rate)
                 self.global_steps += 1
 
                 if (
@@ -278,6 +282,39 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             from verl.trainer.ppo.reward import compute_reward
 
             return compute_reward(batch, self.reward_fn)
+
+    # ------------------------------------------------------------------
+    # Progress tracking
+    # ------------------------------------------------------------------
+
+    def _save_progress(self, epoch: int, batch_sr: float):
+        """Write a JSON status file with current training progress."""
+        progress_path = os.path.join(
+            self.config.trainer.get("default_local_dir", "./checkpoints"),
+            "progress.json",
+        )
+        os.makedirs(os.path.dirname(progress_path), exist_ok=True)
+
+        elapsed = time.time() - self._training_start_time if self._training_start_time else 0
+        steps_per_epoch = len(self.train_dataloader)
+
+        status = {
+            "global_step": self.global_steps,
+            "epoch": epoch,
+            "total_epochs": self.config.trainer.total_epochs,
+            "steps_per_epoch": steps_per_epoch,
+            "total_steps": self.total_training_steps,
+            "progress_pct": round(self.global_steps / max(self.total_training_steps, 1) * 100, 1),
+            "batch_sr": round(batch_sr, 4),
+            "sr_ema": round(self.metrics_tracker.sr_ema, 4),
+            "guidance_mode": self.guidance_mode,
+            "elapsed_seconds": round(elapsed, 1),
+            "avg_seconds_per_step": round(elapsed / max(self.global_steps, 1), 1),
+            "experiment_name": self.config.trainer.experiment_name,
+        }
+
+        with open(progress_path, "w", encoding="utf-8") as f:
+            json.dump(status, f, indent=2, ensure_ascii=False)
 
     # ------------------------------------------------------------------
     # Debug dump
