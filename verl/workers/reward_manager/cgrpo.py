@@ -121,6 +121,7 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
             "extracted_answers": [],
             "ground_truths": [],
             "is_correct": [],
+            "acc": [],
             "has_format": [],
             "failure_reasons": [],
             "is_truncated": [],
@@ -168,6 +169,7 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
             extra_info["extracted_answers"].append(extracted_answer)
             extra_info["ground_truths"].append(ground_truth)
             extra_info["is_correct"].append(is_correct)
+            extra_info["acc"].append(float(is_correct))
             extra_info["has_format"].append(has_format)
             extra_info["failure_reasons"].append(failure_reason)
             extra_info["is_truncated"].append(is_truncated)

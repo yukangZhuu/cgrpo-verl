@@ -81,6 +81,7 @@ actor_rollout_ref:
 # Reward Model Configuration
 reward_model:
   enable: false
+  use_reward_loop: false
   num_examine: 0
   format_score: 0.0
   correct_score: 1.0

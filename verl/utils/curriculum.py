@@ -28,7 +28,7 @@ class TrainingMetricsTracker:
     No curriculum scheduling — purely observational.
     """
 
-    def __init__(self, ema_alpha: float = 0.1, window_size: int = 100):
+    def __init__(self, ema_alpha: float = 0.1, window_size: int = 20):
         self.ema_alpha = ema_alpha
         self.sr_ema = 0.0
         self.total_steps = 0
