@@ -73,7 +73,7 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.default_local_dir=checkpoints/C3_math_mixture_prefix \
     trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
-    trainer.save_freq=50 \
+    trainer.save_freq=100 \
     trainer.test_freq=20 \
     trainer.total_epochs=80 \
     trainer.val_before_train=True \

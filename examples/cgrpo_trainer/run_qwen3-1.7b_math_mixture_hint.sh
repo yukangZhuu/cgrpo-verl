@@ -2,13 +2,13 @@
 # C3: Static mixture on MATH unsolvable expanded (prefix mode)
 # 375 unsolvable problems × 5 g_levels = 1875 instances
 # guidance_mode=prefix: teacher steps injected inside <think> tag
-# Hardware: 6× A800 80GB
+# Hardware: 4× A800 80GB
 set -x
 
 export VLLM_USE_DEEP_GEMM=0
 export VLLM_DEEP_GEMM_WARMUP=skip
 
-export VERL_FILE_LOGGER_PATH=logs/math_mixture_prefix_metrics.jsonl
+export VERL_FILE_LOGGER_PATH=logs/math_mixture_hint_metrics.jsonl
 mkdir -p logs
 
 TRAIN_DATA="${TRAIN_DATA:-/root/autodl-tmp/cgrpo-verl/data/math/math_1.7B_unsolvable_expanded.jsonl}"
@@ -31,7 +31,7 @@ python3 -m verl.trainer.main_cgrpo \
     data.train_batch_size=128 \
     data.max_prompt_length=2048 \
     data.max_response_length=2048 \
-    data.guidance_mode=prefix \
+    data.guidance_mode=hint \
     \
     actor_rollout_ref.rollout.prompt_length=2048 \
     actor_rollout_ref.rollout.response_length=2048 \
@@ -68,16 +68,16 @@ python3 -m verl.trainer.main_cgrpo \
     \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb","file"]' \
-    trainer.project_name='math_mixture_prefix' \
-    trainer.experiment_name='C3_math_mixture_prefix_6gpu_0405' \
-    trainer.default_local_dir=checkpoints/C3_math_mixture_prefix \
-    trainer.n_gpus_per_node=6 \
+    trainer.project_name='math_mixture_hint' \
+    trainer.experiment_name='C3_math_mixture_hint_0405' \
+    trainer.default_local_dir=checkpoints/C3_math_mixture_hint \
+    trainer.n_gpus_per_node=4 \
     trainer.nnodes=1 \
     trainer.save_freq=100 \
     trainer.test_freq=20 \
     trainer.total_epochs=80 \
     trainer.val_before_train=True \
     trainer.debug_dump_freq=20 \
-    trainer.debug_dump_dir=debug_samples/C3_math_mixture_prefix \
-    trainer.debug_dump_num_samples=10 \
+    trainer.debug_dump_dir=debug_samples/C3_math_mixture_hint \
+    trainer.debug_dump_num_samples=5 \
     $@
