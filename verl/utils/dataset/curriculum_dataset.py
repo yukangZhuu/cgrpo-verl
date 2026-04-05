@@ -176,7 +176,7 @@ class CurriculumGRPODataset(Dataset):
     ) -> list[dict]:
         """Build chat messages.  The AgentLoop will apply_chat_template."""
 
-        if self.guidance_mode == "hint" and guidance_steps:
+        if self.guidance_mode == "hint" and len(guidance_steps) > 0:
             user_content = self._build_hint_user_content(question, guidance_steps)
         else:
             user_content = self._build_standard_user_content(question)

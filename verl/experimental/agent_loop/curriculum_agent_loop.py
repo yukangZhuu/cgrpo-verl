@@ -74,7 +74,7 @@ class CurriculumAgentLoop(AgentLoopBase):
         guidance_steps: list[str] = kwargs.get("guidance_steps", [])
 
         teacher_prefix = ""
-        if self.guidance_mode == "prefix" and guidance_steps:
+        if self.guidance_mode == "prefix" and len(guidance_steps) > 0:
             teacher_prefix = "\n".join(guidance_steps)
 
         prompt_ids = await self._build_prompt(
