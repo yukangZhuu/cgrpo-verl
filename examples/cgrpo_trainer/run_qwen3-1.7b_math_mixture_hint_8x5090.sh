@@ -8,6 +8,12 @@ set -x
 export VLLM_USE_DEEP_GEMM=0
 export VLLM_DEEP_GEMM_WARMUP=skip
 
+# 8-GPU setups spawn many Ray/vLLM worker processes; raise OS limits
+ulimit -u unlimited 2>/dev/null || true
+ulimit -n 65536     2>/dev/null || true
+export OMP_NUM_THREADS=4
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+
 export VERL_FILE_LOGGER_PATH=logs/math_mixture_hint_8x5090_metrics.jsonl
 mkdir -p logs
 
