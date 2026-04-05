@@ -14,7 +14,7 @@ ulimit -n 65536     2>/dev/null || true
 export OMP_NUM_THREADS=4
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
-export VERL_FILE_LOGGER_PATH=logs/math_mixture_hint_8x5090_metrics.jsonl
+export VERL_FILE_LOGGER_PATH=logs/math_mixture_prefix_8x5090_metrics.jsonl
 mkdir -p logs
 
 TRAIN_DATA="${TRAIN_DATA:-/root/autodl-tmp/cgrpo-verl/data/math/math_1.7B_unsolvable_expanded.jsonl}"
@@ -74,9 +74,9 @@ python3 -m verl.trainer.main_cgrpo \
     \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb","file"]' \
-    trainer.project_name='math_mixture_hint' \
-    trainer.experiment_name='C3_math_mixture_hint_8x5090_0405' \
-    trainer.default_local_dir=checkpoints/C3_math_mixture_hint \
+    trainer.project_name='math_mixture_prefix' \
+    trainer.experiment_name='C3_math_mixture_prefix_8x5090_0405' \
+    trainer.default_local_dir=checkpoints/C3_math_mixture_prefix \
     trainer.n_gpus_per_node=8 \
     trainer.nnodes=1 \
     trainer.save_freq=100 \
@@ -84,6 +84,6 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.total_epochs=80 \
     trainer.val_before_train=True \
     trainer.debug_dump_freq=20 \
-    trainer.debug_dump_dir=debug_samples/C3_math_mixture_hint \
+    trainer.debug_dump_dir=debug_samples/C3_math_mixture_prefix \
     trainer.debug_dump_num_samples=5 \
     $@
