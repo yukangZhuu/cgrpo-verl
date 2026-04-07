@@ -32,11 +32,11 @@ python3 -m verl.trainer.main_cgrpo \
     data.train_files=$TRAIN_DATA \
     $VAL_ARG \
     data.train_batch_size=128 \
-    data.max_prompt_length=1800 \
+    data.max_prompt_length=1024 \
     data.max_response_length=8192 \
     data.guidance_mode=none \
     \
-    actor_rollout_ref.rollout.prompt_length=1800 \
+    actor_rollout_ref.rollout.prompt_length=1024 \
     actor_rollout_ref.rollout.response_length=8192 \
     \
     data.filter_overlong_prompts=True \
@@ -46,6 +46,8 @@ python3 -m verl.trainer.main_cgrpo \
     actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.ppo_mini_batch_size=128 \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=4 \
+    actor_rollout_ref.actor.use_dynamic_bsz=True \
+    actor_rollout_ref.actor.ppo_max_token_len_per_gpu=36000 \
     actor_rollout_ref.actor.use_kl_loss=True \
     actor_rollout_ref.actor.kl_loss_coef=0.001 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
@@ -58,11 +60,13 @@ python3 -m verl.trainer.main_cgrpo \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=16 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
     actor_rollout_ref.rollout.name=vllm \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.65 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.70 \
     actor_rollout_ref.rollout.n=8 \
-    actor_rollout_ref.rollout.temperature=1.0 \
-    actor_rollout_ref.rollout.top_p=0.95 \
+    actor_rollout_ref.rollout.temperature=0.6 \
     actor_rollout_ref.rollout.max_num_batched_tokens=32768 \
+    actor_rollout_ref.rollout.val_kwargs.temperature=0.6 \
+    actor_rollout_ref.rollout.val_kwargs.do_sample=True \
+    actor_rollout_ref.rollout.val_kwargs.n=1 \
     actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=16 \
     actor_rollout_ref.ref.fsdp_config.param_offload=False \
     \
@@ -72,15 +76,15 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb","file"]' \
     trainer.project_name='ttn2k' \
-    trainer.experiment_name='B1_baseline_2k_8xpro6000' \
-    trainer.default_local_dir=checkpoints/ttn2k_B1_baseline \
+    trainer.experiment_name='ttn2k_baseline_8xpro6000' \
+    trainer.default_local_dir=checkpoints/ttn2k_baseline \
     trainer.n_gpus_per_node=8 \
     trainer.nnodes=1 \
-    trainer.save_freq=200 \
-    trainer.test_freq=100 \
-    trainer.total_epochs=70 \
+    trainer.save_freq=100 \
+    trainer.test_freq=10 \
+    trainer.total_epochs=100 \
     trainer.val_before_train=True \
-    trainer.debug_dump_freq=100 \
-    trainer.debug_dump_dir=debug_samples/ttn2k_B1 \
+    trainer.debug_dump_freq=20 \
+    trainer.debug_dump_dir=debug_samples/ttn2k_baseline \
     trainer.debug_dump_num_samples=5 \
     $@
