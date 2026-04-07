@@ -75,9 +75,11 @@ class CGRPOTaskRunner:
 
         self._setup_workers(config)
 
+        from verl.trainer.ppo.utils import need_reference_policy
+
         validate_config(
             config=config,
-            use_reference_policy=True,
+            use_reference_policy=need_reference_policy(config),
             use_critic=False,
         )
 
