@@ -1,0 +1,817 @@
+{
+  "generated_at_utc": "2026-04-08T08:42:52.896520+00:00",
+  "source_file": "/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64.jsonl",
+  "output_file": "/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64_max2600_n100/dataset.jsonl",
+  "definitions": {
+    "question_chars": "len(question) in Python (Unicode code points)",
+    "steps_chars": "sum(len(s) for s in steps)",
+    "question_plus_steps_chars": "question_chars + steps_chars"
+  },
+  "steps": [
+    {
+      "name": "load_jsonl",
+      "non_empty_lines": 136
+    },
+    {
+      "name": "filter_by_total_length",
+      "keep_if": "question_plus_steps_chars <= 2600",
+      "threshold": 2600,
+      "kept": 112,
+      "dropped": 24
+    },
+    {
+      "name": "random_subsample",
+      "random_seed": 42,
+      "target_count": 100,
+      "output_count": 100,
+      "note": "sampled 100 without replacement from 112 (seed=42)"
+    }
+  ],
+  "counts": {
+    "raw": 136,
+    "after_length_filter": 112,
+    "final_output": 100
+  },
+  "dropped_by_length_filter": [
+    {
+      "dataset_index": 7297,
+      "question_chars": 486,
+      "steps_chars": 2771,
+      "question_plus_steps_chars": 3257,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 13473,
+      "question_chars": 445,
+      "steps_chars": 2696,
+      "question_plus_steps_chars": 3141,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 11196,
+      "question_chars": 262,
+      "steps_chars": 2780,
+      "question_plus_steps_chars": 3042,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 1069,
+      "question_chars": 224,
+      "steps_chars": 2754,
+      "question_plus_steps_chars": 2978,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 2231,
+      "question_chars": 236,
+      "steps_chars": 2742,
+      "question_plus_steps_chars": 2978,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 6423,
+      "question_chars": 330,
+      "steps_chars": 2639,
+      "question_plus_steps_chars": 2969,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 18937,
+      "question_chars": 241,
+      "steps_chars": 2725,
+      "question_plus_steps_chars": 2966,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 8104,
+      "question_chars": 300,
+      "steps_chars": 2660,
+      "question_plus_steps_chars": 2960,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 14288,
+      "question_chars": 409,
+      "steps_chars": 2532,
+      "question_plus_steps_chars": 2941,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 17823,
+      "question_chars": 205,
+      "steps_chars": 2707,
+      "question_plus_steps_chars": 2912,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 4909,
+      "question_chars": 418,
+      "steps_chars": 2489,
+      "question_plus_steps_chars": 2907,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 17670,
+      "question_chars": 429,
+      "steps_chars": 2456,
+      "question_plus_steps_chars": 2885,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 5172,
+      "question_chars": 356,
+      "steps_chars": 2520,
+      "question_plus_steps_chars": 2876,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 2587,
+      "question_chars": 400,
+      "steps_chars": 2466,
+      "question_plus_steps_chars": 2866,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 8615,
+      "question_chars": 496,
+      "steps_chars": 2362,
+      "question_plus_steps_chars": 2858,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 5950,
+      "question_chars": 208,
+      "steps_chars": 2633,
+      "question_plus_steps_chars": 2841,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 9755,
+      "question_chars": 353,
+      "steps_chars": 2487,
+      "question_plus_steps_chars": 2840,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 9367,
+      "question_chars": 221,
+      "steps_chars": 2596,
+      "question_plus_steps_chars": 2817,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 230,
+      "question_chars": 336,
+      "steps_chars": 2467,
+      "question_plus_steps_chars": 2803,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 15706,
+      "question_chars": 172,
+      "steps_chars": 2631,
+      "question_plus_steps_chars": 2803,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 6271,
+      "question_chars": 255,
+      "steps_chars": 2480,
+      "question_plus_steps_chars": 2735,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 16291,
+      "question_chars": 475,
+      "steps_chars": 2243,
+      "question_plus_steps_chars": 2718,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 5679,
+      "question_chars": 275,
+      "steps_chars": 2432,
+      "question_plus_steps_chars": 2707,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    },
+    {
+      "dataset_index": 16338,
+      "question_chars": 152,
+      "steps_chars": 2518,
+      "question_plus_steps_chars": 2670,
+      "drop_reason": "question_plus_steps_chars > 2600"
+    }
+  ],
+  "final_samples": [
+    {
+      "dataset_index": 12728,
+      "question_chars": 140,
+      "steps_chars": 1081,
+      "question_plus_steps_chars": 1221
+    },
+    {
+      "dataset_index": 9601,
+      "question_chars": 102,
+      "steps_chars": 768,
+      "question_plus_steps_chars": 870
+    },
+    {
+      "dataset_index": 19965,
+      "question_chars": 157,
+      "steps_chars": 511,
+      "question_plus_steps_chars": 668
+    },
+    {
+      "dataset_index": 1532,
+      "question_chars": 203,
+      "steps_chars": 1502,
+      "question_plus_steps_chars": 1705
+    },
+    {
+      "dataset_index": 13357,
+      "question_chars": 159,
+      "steps_chars": 1537,
+      "question_plus_steps_chars": 1696
+    },
+    {
+      "dataset_index": 5735,
+      "question_chars": 149,
+      "steps_chars": 1388,
+      "question_plus_steps_chars": 1537
+    },
+    {
+      "dataset_index": 9435,
+      "question_chars": 157,
+      "steps_chars": 1230,
+      "question_plus_steps_chars": 1387
+    },
+    {
+      "dataset_index": 4925,
+      "question_chars": 430,
+      "steps_chars": 1509,
+      "question_plus_steps_chars": 1939
+    },
+    {
+      "dataset_index": 2346,
+      "question_chars": 130,
+      "steps_chars": 1739,
+      "question_plus_steps_chars": 1869
+    },
+    {
+      "dataset_index": 8043,
+      "question_chars": 308,
+      "steps_chars": 1665,
+      "question_plus_steps_chars": 1973
+    },
+    {
+      "dataset_index": 11544,
+      "question_chars": 351,
+      "steps_chars": 1793,
+      "question_plus_steps_chars": 2144
+    },
+    {
+      "dataset_index": 18607,
+      "question_chars": 384,
+      "steps_chars": 1843,
+      "question_plus_steps_chars": 2227
+    },
+    {
+      "dataset_index": 12978,
+      "question_chars": 145,
+      "steps_chars": 2455,
+      "question_plus_steps_chars": 2600
+    },
+    {
+      "dataset_index": 9395,
+      "question_chars": 183,
+      "steps_chars": 2378,
+      "question_plus_steps_chars": 2561
+    },
+    {
+      "dataset_index": 218,
+      "question_chars": 256,
+      "steps_chars": 2262,
+      "question_plus_steps_chars": 2518
+    },
+    {
+      "dataset_index": 5953,
+      "question_chars": 380,
+      "steps_chars": 1334,
+      "question_plus_steps_chars": 1714
+    },
+    {
+      "dataset_index": 868,
+      "question_chars": 175,
+      "steps_chars": 1135,
+      "question_plus_steps_chars": 1310
+    },
+    {
+      "dataset_index": 2603,
+      "question_chars": 406,
+      "steps_chars": 1556,
+      "question_plus_steps_chars": 1962
+    },
+    {
+      "dataset_index": 13675,
+      "question_chars": 203,
+      "steps_chars": 2070,
+      "question_plus_steps_chars": 2273
+    },
+    {
+      "dataset_index": 10197,
+      "question_chars": 176,
+      "steps_chars": 1357,
+      "question_plus_steps_chars": 1533
+    },
+    {
+      "dataset_index": 15960,
+      "question_chars": 312,
+      "steps_chars": 2137,
+      "question_plus_steps_chars": 2449
+    },
+    {
+      "dataset_index": 458,
+      "question_chars": 130,
+      "steps_chars": 2241,
+      "question_plus_steps_chars": 2371
+    },
+    {
+      "dataset_index": 2572,
+      "question_chars": 187,
+      "steps_chars": 1361,
+      "question_plus_steps_chars": 1548
+    },
+    {
+      "dataset_index": 11048,
+      "question_chars": 357,
+      "steps_chars": 2175,
+      "question_plus_steps_chars": 2532
+    },
+    {
+      "dataset_index": 13215,
+      "question_chars": 410,
+      "steps_chars": 1065,
+      "question_plus_steps_chars": 1475
+    },
+    {
+      "dataset_index": 7963,
+      "question_chars": 223,
+      "steps_chars": 1571,
+      "question_plus_steps_chars": 1794
+    },
+    {
+      "dataset_index": 16672,
+      "question_chars": 336,
+      "steps_chars": 1387,
+      "question_plus_steps_chars": 1723
+    },
+    {
+      "dataset_index": 15018,
+      "question_chars": 279,
+      "steps_chars": 1416,
+      "question_plus_steps_chars": 1695
+    },
+    {
+      "dataset_index": 11293,
+      "question_chars": 317,
+      "steps_chars": 1488,
+      "question_plus_steps_chars": 1805
+    },
+    {
+      "dataset_index": 5386,
+      "question_chars": 167,
+      "steps_chars": 1964,
+      "question_plus_steps_chars": 2131
+    },
+    {
+      "dataset_index": 1118,
+      "question_chars": 266,
+      "steps_chars": 1297,
+      "question_plus_steps_chars": 1563
+    },
+    {
+      "dataset_index": 16365,
+      "question_chars": 479,
+      "steps_chars": 939,
+      "question_plus_steps_chars": 1418
+    },
+    {
+      "dataset_index": 3925,
+      "question_chars": 359,
+      "steps_chars": 1859,
+      "question_plus_steps_chars": 2218
+    },
+    {
+      "dataset_index": 4850,
+      "question_chars": 309,
+      "steps_chars": 1440,
+      "question_plus_steps_chars": 1749
+    },
+    {
+      "dataset_index": 7451,
+      "question_chars": 107,
+      "steps_chars": 637,
+      "question_plus_steps_chars": 744
+    },
+    {
+      "dataset_index": 2305,
+      "question_chars": 87,
+      "steps_chars": 2101,
+      "question_plus_steps_chars": 2188
+    },
+    {
+      "dataset_index": 17730,
+      "question_chars": 298,
+      "steps_chars": 1694,
+      "question_plus_steps_chars": 1992
+    },
+    {
+      "dataset_index": 11560,
+      "question_chars": 87,
+      "steps_chars": 807,
+      "question_plus_steps_chars": 894
+    },
+    {
+      "dataset_index": 16493,
+      "question_chars": 342,
+      "steps_chars": 2143,
+      "question_plus_steps_chars": 2485
+    },
+    {
+      "dataset_index": 1967,
+      "question_chars": 349,
+      "steps_chars": 1714,
+      "question_plus_steps_chars": 2063
+    },
+    {
+      "dataset_index": 4519,
+      "question_chars": 163,
+      "steps_chars": 2287,
+      "question_plus_steps_chars": 2450
+    },
+    {
+      "dataset_index": 19177,
+      "question_chars": 415,
+      "steps_chars": 1491,
+      "question_plus_steps_chars": 1906
+    },
+    {
+      "dataset_index": 17276,
+      "question_chars": 440,
+      "steps_chars": 2012,
+      "question_plus_steps_chars": 2452
+    },
+    {
+      "dataset_index": 15878,
+      "question_chars": 422,
+      "steps_chars": 1407,
+      "question_plus_steps_chars": 1829
+    },
+    {
+      "dataset_index": 9838,
+      "question_chars": 343,
+      "steps_chars": 1835,
+      "question_plus_steps_chars": 2178
+    },
+    {
+      "dataset_index": 14866,
+      "question_chars": 305,
+      "steps_chars": 574,
+      "question_plus_steps_chars": 879
+    },
+    {
+      "dataset_index": 17040,
+      "question_chars": 401,
+      "steps_chars": 1821,
+      "question_plus_steps_chars": 2222
+    },
+    {
+      "dataset_index": 17063,
+      "question_chars": 489,
+      "steps_chars": 1529,
+      "question_plus_steps_chars": 2018
+    },
+    {
+      "dataset_index": 684,
+      "question_chars": 323,
+      "steps_chars": 598,
+      "question_plus_steps_chars": 921
+    },
+    {
+      "dataset_index": 3896,
+      "question_chars": 103,
+      "steps_chars": 1330,
+      "question_plus_steps_chars": 1433
+    },
+    {
+      "dataset_index": 9674,
+      "question_chars": 293,
+      "steps_chars": 2147,
+      "question_plus_steps_chars": 2440
+    },
+    {
+      "dataset_index": 4065,
+      "question_chars": 235,
+      "steps_chars": 1893,
+      "question_plus_steps_chars": 2128
+    },
+    {
+      "dataset_index": 19686,
+      "question_chars": 204,
+      "steps_chars": 1128,
+      "question_plus_steps_chars": 1332
+    },
+    {
+      "dataset_index": 15949,
+      "question_chars": 261,
+      "steps_chars": 1940,
+      "question_plus_steps_chars": 2201
+    },
+    {
+      "dataset_index": 3203,
+      "question_chars": 393,
+      "steps_chars": 1814,
+      "question_plus_steps_chars": 2207
+    },
+    {
+      "dataset_index": 10493,
+      "question_chars": 272,
+      "steps_chars": 2061,
+      "question_plus_steps_chars": 2333
+    },
+    {
+      "dataset_index": 60,
+      "question_chars": 339,
+      "steps_chars": 1738,
+      "question_plus_steps_chars": 2077
+    },
+    {
+      "dataset_index": 501,
+      "question_chars": 426,
+      "steps_chars": 1242,
+      "question_plus_steps_chars": 1668
+    },
+    {
+      "dataset_index": 13338,
+      "question_chars": 204,
+      "steps_chars": 1265,
+      "question_plus_steps_chars": 1469
+    },
+    {
+      "dataset_index": 3223,
+      "question_chars": 383,
+      "steps_chars": 1744,
+      "question_plus_steps_chars": 2127
+    },
+    {
+      "dataset_index": 5903,
+      "question_chars": 170,
+      "steps_chars": 1322,
+      "question_plus_steps_chars": 1492
+    },
+    {
+      "dataset_index": 8098,
+      "question_chars": 196,
+      "steps_chars": 1851,
+      "question_plus_steps_chars": 2047
+    },
+    {
+      "dataset_index": 18769,
+      "question_chars": 214,
+      "steps_chars": 1929,
+      "question_plus_steps_chars": 2143
+    },
+    {
+      "dataset_index": 5031,
+      "question_chars": 292,
+      "steps_chars": 1575,
+      "question_plus_steps_chars": 1867
+    },
+    {
+      "dataset_index": 11223,
+      "question_chars": 212,
+      "steps_chars": 1794,
+      "question_plus_steps_chars": 2006
+    },
+    {
+      "dataset_index": 6166,
+      "question_chars": 332,
+      "steps_chars": 1313,
+      "question_plus_steps_chars": 1645
+    },
+    {
+      "dataset_index": 8707,
+      "question_chars": 204,
+      "steps_chars": 1650,
+      "question_plus_steps_chars": 1854
+    },
+    {
+      "dataset_index": 15602,
+      "question_chars": 380,
+      "steps_chars": 2033,
+      "question_plus_steps_chars": 2413
+    },
+    {
+      "dataset_index": 18969,
+      "question_chars": 350,
+      "steps_chars": 1241,
+      "question_plus_steps_chars": 1591
+    },
+    {
+      "dataset_index": 7439,
+      "question_chars": 245,
+      "steps_chars": 1792,
+      "question_plus_steps_chars": 2037
+    },
+    {
+      "dataset_index": 2908,
+      "question_chars": 215,
+      "steps_chars": 1650,
+      "question_plus_steps_chars": 1865
+    },
+    {
+      "dataset_index": 14001,
+      "question_chars": 124,
+      "steps_chars": 1303,
+      "question_plus_steps_chars": 1427
+    },
+    {
+      "dataset_index": 19886,
+      "question_chars": 408,
+      "steps_chars": 1826,
+      "question_plus_steps_chars": 2234
+    },
+    {
+      "dataset_index": 18873,
+      "question_chars": 254,
+      "steps_chars": 1532,
+      "question_plus_steps_chars": 1786
+    },
+    {
+      "dataset_index": 16623,
+      "question_chars": 80,
+      "steps_chars": 1907,
+      "question_plus_steps_chars": 1987
+    },
+    {
+      "dataset_index": 10260,
+      "question_chars": 374,
+      "steps_chars": 1321,
+      "question_plus_steps_chars": 1695
+    },
+    {
+      "dataset_index": 6093,
+      "question_chars": 129,
+      "steps_chars": 2154,
+      "question_plus_steps_chars": 2283
+    },
+    {
+      "dataset_index": 12013,
+      "question_chars": 66,
+      "steps_chars": 1272,
+      "question_plus_steps_chars": 1338
+    },
+    {
+      "dataset_index": 6862,
+      "question_chars": 442,
+      "steps_chars": 1446,
+      "question_plus_steps_chars": 1888
+    },
+    {
+      "dataset_index": 15081,
+      "question_chars": 310,
+      "steps_chars": 594,
+      "question_plus_steps_chars": 904
+    },
+    {
+      "dataset_index": 16865,
+      "question_chars": 155,
+      "steps_chars": 1299,
+      "question_plus_steps_chars": 1454
+    },
+    {
+      "dataset_index": 708,
+      "question_chars": 390,
+      "steps_chars": 1117,
+      "question_plus_steps_chars": 1507
+    },
+    {
+      "dataset_index": 18333,
+      "question_chars": 480,
+      "steps_chars": 1881,
+      "question_plus_steps_chars": 2361
+    },
+    {
+      "dataset_index": 16424,
+      "question_chars": 339,
+      "steps_chars": 2098,
+      "question_plus_steps_chars": 2437
+    },
+    {
+      "dataset_index": 15594,
+      "question_chars": 466,
+      "steps_chars": 1660,
+      "question_plus_steps_chars": 2126
+    },
+    {
+      "dataset_index": 8289,
+      "question_chars": 411,
+      "steps_chars": 1940,
+      "question_plus_steps_chars": 2351
+    },
+    {
+      "dataset_index": 7384,
+      "question_chars": 266,
+      "steps_chars": 1905,
+      "question_plus_steps_chars": 2171
+    },
+    {
+      "dataset_index": 12605,
+      "question_chars": 213,
+      "steps_chars": 704,
+      "question_plus_steps_chars": 917
+    },
+    {
+      "dataset_index": 4861,
+      "question_chars": 179,
+      "steps_chars": 2272,
+      "question_plus_steps_chars": 2451
+    },
+    {
+      "dataset_index": 16720,
+      "question_chars": 442,
+      "steps_chars": 1066,
+      "question_plus_steps_chars": 1508
+    },
+    {
+      "dataset_index": 16335,
+      "question_chars": 493,
+      "steps_chars": 1629,
+      "question_plus_steps_chars": 2122
+    },
+    {
+      "dataset_index": 19804,
+      "question_chars": 263,
+      "steps_chars": 1636,
+      "question_plus_steps_chars": 1899
+    },
+    {
+      "dataset_index": 13761,
+      "question_chars": 391,
+      "steps_chars": 1981,
+      "question_plus_steps_chars": 2372
+    },
+    {
+      "dataset_index": 15985,
+      "question_chars": 300,
+      "steps_chars": 1193,
+      "question_plus_steps_chars": 1493
+    },
+    {
+      "dataset_index": 10523,
+      "question_chars": 269,
+      "steps_chars": 1405,
+      "question_plus_steps_chars": 1674
+    },
+    {
+      "dataset_index": 4352,
+      "question_chars": 275,
+      "steps_chars": 1601,
+      "question_plus_steps_chars": 1876
+    },
+    {
+      "dataset_index": 3889,
+      "question_chars": 210,
+      "steps_chars": 2076,
+      "question_plus_steps_chars": 2286
+    },
+    {
+      "dataset_index": 18722,
+      "question_chars": 345,
+      "steps_chars": 1594,
+      "question_plus_steps_chars": 1939
+    },
+    {
+      "dataset_index": 8413,
+      "question_chars": 262,
+      "steps_chars": 1865,
+      "question_plus_steps_chars": 2127
+    },
+    {
+      "dataset_index": 16992,
+      "question_chars": 285,
+      "steps_chars": 1559,
+      "question_plus_steps_chars": 1844
+    }
+  ],
+  "expanded_subset": {
+    "generated_at_utc": "2026-04-08T08:44:54.077774+00:00",
+    "source_file": "/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64_expanded.jsonl",
+    "output_file": "/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64_max2600_n100/dataset_expanded.jsonl",
+    "filter": "keep rows whose index is in dataset.jsonl index set",
+    "allowed_indices_count": 100,
+    "expanded_source_lines": 680,
+    "expanded_output_lines": 500,
+    "rows_per_index_expected": 5.0
+  }
+}
