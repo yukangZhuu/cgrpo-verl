@@ -85,6 +85,9 @@ reward_model:
   num_examine: 0
   format_score: 0.0
   correct_score: 1.0
+  overlong_buffer_enable: false
+  overlong_buffer_len: 1024
+  overlong_penalty_factor: 1.0
 
 # Trainer Configuration
 trainer:

@@ -33,10 +33,11 @@ from verl.workers.reward_manager.abstract import AbstractRewardManager
 logger = logging.getLogger(__name__)
 
 if not MATH_VERIFY_AVAILABLE:
-    logger.warning(
-        "math_verify is not installed. Answer verification will use a weak fallback "
-        "that only supports exact string match and numeric comparison. "
-        "Install with: pip install math-verify"
+    raise ImportError(
+        "math_verify is required for CurriculumGRPORewardManager but is not installed. "
+        "Without it, LaTeX and symbolic answer verification is disabled, which causes "
+        "most correct answers to be scored as wrong — leading to training collapse. "
+        "Install with:  pip install math-verify"
     )
 
 
@@ -338,9 +339,6 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
                 return True
         except (ValueError, OverflowError):
             pass
-
-        if not MATH_VERIFY_AVAILABLE:
-            return False
 
         try:
             configs = [LatexExtractionConfig(), ExprExtractionConfig(), StringExtractionConfig()]
