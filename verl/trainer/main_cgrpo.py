@@ -98,6 +98,9 @@ class CGRPOTaskRunner:
             num_examine=config.reward_model.get("num_examine", 0),
             format_score=config.reward_model.get("format_score", 0.0),
             correct_score=config.reward_model.get("correct_score", 1.0),
+            overlong_buffer_enable=config.reward_model.get("overlong_buffer_enable", False),
+            overlong_buffer_len=config.reward_model.get("overlong_buffer_len", 1024),
+            overlong_penalty_factor=config.reward_model.get("overlong_penalty_factor", 1.0),
         )
 
         train_dataset = CurriculumGRPODataset(

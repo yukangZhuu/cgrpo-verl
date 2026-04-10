@@ -224,13 +224,29 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 self.checkpoint_manager.update_weights()
 
                 # --- Metrics ---
-                rewards_per_sample = reward_tensor.sum(dim=-1)
-                batch_success_rate = rewards_per_sample.mean().item()
+                # Success rate from pure accuracy (unaffected by overlong penalty)
+                acc_list = reward_extra_info.get("acc", [])
+                batch_success_rate = (
+                    sum(acc_list) / len(acc_list) if acc_list else 0.0
+                )
                 tracker_metrics = self.metrics_tracker.update(
                     batch_success_rate=batch_success_rate,
                     batch_size=len(batch),
                 )
                 metrics.update(tracker_metrics)
+
+                # Shaped reward mean (what the optimizer actually sees)
+                reward_mean = reward_tensor.sum(dim=-1).mean().item()
+                metrics["training/reward_mean"] = reward_mean
+
+                # Overlong / truncation rate
+                truncated_list = reward_extra_info.get("is_truncated", [])
+                overlong_rate = (
+                    sum(truncated_list) / len(truncated_list)
+                    if truncated_list
+                    else 0.0
+                )
+                metrics["training/overlong_rate"] = overlong_rate
 
                 metrics.update(
                     {

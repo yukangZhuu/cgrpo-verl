@@ -59,6 +59,9 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         format_score: float = 0.0,
         correct_score: float = 1.0,
         strict_format: bool = False,
+        overlong_buffer_enable: bool = False,
+        overlong_buffer_len: int = 1024,
+        overlong_penalty_factor: float = 1.0,
         **kwargs,
     ):
         self.tokenizer = tokenizer
@@ -66,6 +69,15 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         self.format_score = format_score
         self.correct_score = correct_score
         self.strict_format = strict_format
+        self.overlong_buffer_enable = overlong_buffer_enable
+        self.overlong_buffer_len = overlong_buffer_len
+        self.overlong_penalty_factor = overlong_penalty_factor
+
+        if self.overlong_buffer_enable:
+            logger.info(
+                f"Overlong buffer enabled: buffer_len={overlong_buffer_len}, "
+                f"penalty_factor={overlong_penalty_factor}"
+            )
     
     def __call__(self, data: Any, return_dict: bool = False, **kwargs) -> Any:
         """
@@ -174,6 +186,20 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
             extra_info["failure_reasons"].append(failure_reason)
             extra_info["is_truncated"].append(is_truncated)
         
+        # --- Overlong reward shaping (DAPO-style) ---
+        extra_info["overlong_penalty_applied"] = [False] * batch_size
+        if self.overlong_buffer_enable:
+            buffer_start = response_length - self.overlong_buffer_len
+            for i in range(batch_size):
+                actual_len = last_valid_indices[i] + 1
+                if actual_len > buffer_start and not extra_info["is_correct"][i]:
+                    fraction = min((actual_len - buffer_start) / max(self.overlong_buffer_len, 1), 1.0)
+                    penalty = fraction * self.overlong_penalty_factor
+                    rewards[i] = -penalty
+                    extra_info["overlong_penalty_applied"][i] = True
+                    if extra_info["is_truncated"][i]:
+                        extra_info["failure_reasons"][i] = "truncated_penalized"
+
         reward_tensor = torch.zeros(batch_size, response_length, dtype=torch.float32)
         for i, reward in enumerate(rewards):
             if last_valid_indices[i] >= 0:
