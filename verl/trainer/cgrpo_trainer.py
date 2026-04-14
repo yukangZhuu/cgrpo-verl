@@ -13,8 +13,10 @@
 # limitations under the License.
 """
 CGRPO Trainer.
-Extends RayPPOTrainer for both standard GRPO and static-mixture curriculum GRPO.
-Guidance mode and per-sample g_level are read from the data; no dynamic scheduling.
+Extends RayPPOTrainer for:
+  - standard GRPO          (curriculum_method=none)
+  - static-mixture GRPO    (curriculum_method=mixture)
+  - per-sample adaptive    (curriculum_method=adaptive, AdaBack-style)
 """
 
 import json
@@ -33,7 +35,8 @@ import uuid
 from verl import DataProto
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer, compute_advantage
 from verl.trainer.ppo.metric_utils import compute_data_metrics
-from verl.utils.curriculum import TrainingMetricsTracker
+from verl.utils.curriculum import TrainingMetricsTracker, PerSampleCurriculumState
+from verl.utils.dataset.curriculum_dataset import CurriculumGRPODataset
 from verl.workers.reward_manager.cgrpo import CurriculumGRPORewardManager
 
 logger = logging.getLogger(__name__)
@@ -41,12 +44,13 @@ logger = logging.getLogger(__name__)
 
 class CurriculumGRPOTrainer(RayPPOTrainer):
     """
-    Trainer for CGRPO / standard GRPO.
+    Trainer for CGRPO / standard GRPO / adaptive curriculum.
 
     Extends RayPPOTrainer with:
-    1. Per-sample guidance via g_level / guidance_steps (from dataset)
+    1. Per-sample guidance via g_level / guidance_steps (from dataset or adaptive state)
     2. CurriculumGRPORewardManager for boxed-answer verification
-    3. Debug sample dumping for analysis
+    3. Optional AdaBack-style per-sample adaptive curriculum
+    4. Debug sample dumping for analysis
     """
 
     def __init__(
@@ -88,10 +92,28 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             ema_alpha=self.config.trainer.get("ema_alpha", 0.1),
         )
         self.guidance_mode = self.config.data.get("guidance_mode", "none")
+        self.curriculum_method = self.config.data.get("curriculum_method", "none")
         self._training_start_time = None
 
+        # --- Adaptive curriculum state (only when curriculum_method=adaptive) ---
+        self.adaptive_state: Optional[PerSampleCurriculumState] = None
+        if self.curriculum_method == "adaptive":
+            ac = self.config.get("adaptive_curriculum", {})
+            self.adaptive_state = PerSampleCurriculumState(
+                tau=ac.get("tau", 0.4),
+                p_zero=ac.get("p_zero", 0.1),
+                default_rho=ac.get("default_rho", 0.5),
+                min_step_delta=ac.get("min_step_delta", 1),
+            )
+            logger.info(
+                f"Adaptive curriculum enabled: tau={self.adaptive_state.tau}, "
+                f"p_zero={self.adaptive_state.p_zero}"
+            )
+
         logger.info(
-            f"CurriculumGRPOTrainer initialized, guidance_mode={self.guidance_mode}"
+            f"CurriculumGRPOTrainer initialized: "
+            f"guidance_mode={self.guidance_mode}, "
+            f"curriculum_method={self.curriculum_method}"
         )
 
     # ------------------------------------------------------------------
@@ -143,6 +165,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     dtype=object,
                 )
 
+                # --- Adaptive guidance (before generation) ---
+                if self.curriculum_method == "adaptive":
+                    self._apply_adaptive_guidance(batch)
+
                 # --- Generate ---
                 gen_batch = self._get_gen_batch(batch)
                 gen_batch.meta_info["global_steps"] = self.global_steps
@@ -176,6 +202,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
 
                 batch.batch["token_level_scores"] = reward_tensor
                 batch.batch["token_level_rewards"] = reward_tensor
+
+                # --- Adaptive state update (after reward) ---
+                if self.curriculum_method == "adaptive":
+                    self._update_adaptive_state(batch, reward_extra_info)
 
                 # --- Debug dump ---
                 dump_freq = self.config.trainer.get("debug_dump_freq", 0)
@@ -224,7 +254,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 self.checkpoint_manager.update_weights()
 
                 # --- Metrics ---
-                # Success rate from pure accuracy (unaffected by overlong penalty)
                 acc_list = reward_extra_info.get("acc", [])
                 batch_success_rate = (
                     sum(acc_list) / len(acc_list) if acc_list else 0.0
@@ -235,11 +264,9 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 )
                 metrics.update(tracker_metrics)
 
-                # Shaped reward mean (what the optimizer actually sees)
                 reward_mean = reward_tensor.sum(dim=-1).mean().item()
                 metrics["training/reward_mean"] = reward_mean
 
-                # Overlong / truncation rate
                 truncated_list = reward_extra_info.get("is_truncated", [])
                 overlong_rate = (
                     sum(truncated_list) / len(truncated_list)
@@ -247,6 +274,9 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     else 0.0
                 )
                 metrics["training/overlong_rate"] = overlong_rate
+
+                if self.adaptive_state is not None:
+                    metrics.update(self.adaptive_state.get_metrics())
 
                 metrics.update(
                     {
@@ -283,6 +313,179 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         progress_bar.close()
 
     # ------------------------------------------------------------------
+    # Adaptive curriculum hooks
+    # ------------------------------------------------------------------
+
+    def _apply_adaptive_guidance(self, batch: DataProto) -> None:
+        """
+        For each sample in the batch whose g_level == -1 (sentinel from dataset),
+        sample a rho from the adaptive state, compute guidance_steps, and
+        rebuild raw_prompt if needed (hint mode).
+
+        Frozen anchors (frozen_g_level >= 0) are left untouched.
+        """
+        assert self.adaptive_state is not None
+        batch_size = len(batch)
+
+        new_g_levels = []
+        new_guidance_steps_list = []
+        new_raw_prompts = []
+
+        for i in range(batch_size):
+            item = batch[i]
+            g_level = float(item.non_tensor_batch.get("g_level", 0.0))
+            frozen = float(item.non_tensor_batch.get("frozen_g_level", -1.0))
+            adaptive_id = str(item.non_tensor_batch.get("adaptive_id", str(i)))
+            steps = item.non_tensor_batch.get("steps", [])
+            if isinstance(steps, np.ndarray):
+                steps = steps.tolist()
+
+            if frozen >= 0:
+                # Anchor sample — keep existing g_level and guidance
+                new_g_levels.append(g_level)
+                new_guidance_steps_list.append(
+                    item.non_tensor_batch.get("guidance_steps", [])
+                )
+                new_raw_prompts.append(item.non_tensor_batch.get("raw_prompt", []))
+                continue
+
+            num_steps = len(steps) if isinstance(steps, list) else 0
+            rho = self.adaptive_state.get_rho(adaptive_id, num_steps)
+            guidance = PerSampleCurriculumState.compute_guidance_steps(steps, rho)
+
+            new_g_levels.append(rho)
+            question = item.non_tensor_batch.get(
+                "question",
+                self._extract_question_from_prompt(item.non_tensor_batch.get("raw_prompt", [])),
+            )
+
+            if self.guidance_mode == "hint":
+                if guidance:
+                    user_content = CurriculumGRPODataset._build_hint_user_content(
+                        question, guidance
+                    )
+                else:
+                    user_content = CurriculumGRPODataset._build_standard_user_content(
+                        question
+                    )
+                from verl.utils.dataset.curriculum_dataset import SYSTEM_PROMPT
+                raw_prompt = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_content},
+                ]
+                new_raw_prompts.append(raw_prompt)
+                new_guidance_steps_list.append([])
+            elif self.guidance_mode == "prefix":
+                new_raw_prompts.append(item.non_tensor_batch.get("raw_prompt", []))
+                new_guidance_steps_list.append(guidance)
+            else:
+                new_raw_prompts.append(item.non_tensor_batch.get("raw_prompt", []))
+                new_guidance_steps_list.append([])
+
+        batch.non_tensor_batch["g_level"] = np.array(new_g_levels, dtype=object)
+        batch.non_tensor_batch["guidance_steps"] = np.array(
+            new_guidance_steps_list, dtype=object
+        )
+        batch.non_tensor_batch["raw_prompt"] = np.array(
+            new_raw_prompts, dtype=object
+        )
+
+    def _update_adaptive_state(
+        self, batch: DataProto, reward_extra_info: dict
+    ) -> None:
+        """
+        After reward computation, update the per-sample rho intervals.
+        The batch has been repeat()ed by rollout.n, so we aggregate per
+        original sample using adaptive_id.
+        """
+        assert self.adaptive_state is not None
+        n_rollouts = self.config.actor_rollout_ref.rollout.n
+
+        acc_list = reward_extra_info.get("acc", [])
+        if not acc_list:
+            return
+
+        batch_size = len(batch)
+        num_originals = batch_size // n_rollouts
+
+        for orig_idx in range(num_originals):
+            start = orig_idx * n_rollouts
+            end = start + n_rollouts
+
+            item = batch[start]
+            frozen = float(item.non_tensor_batch.get("frozen_g_level", -1.0))
+            if frozen >= 0:
+                continue
+
+            adaptive_id = str(item.non_tensor_batch.get("adaptive_id", str(orig_idx)))
+            steps = item.non_tensor_batch.get("steps", [])
+            if isinstance(steps, np.ndarray):
+                steps = steps.tolist()
+            num_steps = len(steps) if isinstance(steps, list) else 0
+
+            rollout_accs = acc_list[start:end]
+            avg_reward = sum(rollout_accs) / len(rollout_accs) if rollout_accs else 0.0
+
+            self.adaptive_state.update(adaptive_id, avg_reward, num_steps)
+
+    @staticmethod
+    def _extract_question_from_prompt(raw_prompt) -> str:
+        """Best-effort extraction of the question text from raw_prompt messages."""
+        if isinstance(raw_prompt, list):
+            for msg in raw_prompt:
+                if isinstance(msg, dict) and msg.get("role") == "user":
+                    content = msg.get("content", "")
+                    # The question is the first part before our instruction blocks
+                    parts = content.split("\nPlease reason step by step")
+                    if parts:
+                        return parts[0].split("\nPlease solve the problem")[0].split("\nBelow are some")[0].strip()
+                    return content
+        return str(raw_prompt)
+
+    # ------------------------------------------------------------------
+    # Checkpoint — save/restore adaptive state
+    # ------------------------------------------------------------------
+
+    def _save_checkpoint(self):
+        super()._save_checkpoint()
+        if self.adaptive_state is not None:
+            adaptive_path = os.path.join(
+                self.config.trainer.default_local_dir,
+                f"global_step_{self.global_steps}",
+                "adaptive_curriculum_state.json",
+            )
+            os.makedirs(os.path.dirname(adaptive_path), exist_ok=True)
+            with open(adaptive_path, "w", encoding="utf-8") as f:
+                json.dump(self.adaptive_state.state_dict(), f, indent=2)
+            logger.info(f"Adaptive curriculum state saved to {adaptive_path}")
+
+    def _load_checkpoint(self):
+        super()._load_checkpoint()
+        if self.adaptive_state is None:
+            return
+        if self.config.trainer.resume_mode == "disable":
+            return
+
+        checkpoint_folder = self.config.trainer.default_local_dir
+        if not os.path.isabs(checkpoint_folder):
+            checkpoint_folder = os.path.join(os.getcwd(), checkpoint_folder)
+
+        from verl.utils.checkpoint.checkpoint_manager import find_latest_ckpt_path
+
+        global_step_folder = find_latest_ckpt_path(checkpoint_folder)
+        if global_step_folder is None:
+            return
+
+        adaptive_path = os.path.join(
+            global_step_folder, "adaptive_curriculum_state.json"
+        )
+        if os.path.exists(adaptive_path):
+            with open(adaptive_path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            self.adaptive_state.load_state_dict(state)
+            logger.info(f"Adaptive curriculum state loaded from {adaptive_path}")
+
+    # ------------------------------------------------------------------
     # Reward
     # ------------------------------------------------------------------
 
@@ -292,7 +495,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         if self.reward_fn is not None and isinstance(
             self.reward_fn, CurriculumGRPORewardManager
         ):
-            # return_dict=False → tuple (reward_tensor, extra_info)
             return self.reward_fn(batch, return_dict=False)
         else:
             from verl.trainer.ppo.reward import compute_reward
@@ -304,7 +506,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
     # ------------------------------------------------------------------
 
     def _save_progress(self, epoch: int, batch_sr: float):
-        """Write a JSON status file with current training progress."""
         progress_path = os.path.join(
             self.config.trainer.get("default_local_dir", "./checkpoints"),
             "progress.json",
@@ -324,6 +525,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             "batch_sr": round(batch_sr, 4),
             "sr_ema": round(self.metrics_tracker.sr_ema, 4),
             "guidance_mode": self.guidance_mode,
+            "curriculum_method": self.curriculum_method,
             "elapsed_seconds": round(elapsed, 1),
             "avg_seconds_per_step": round(elapsed / max(self.global_steps, 1), 1),
             "experiment_name": self.config.trainer.experiment_name,
@@ -374,6 +576,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             )
             g_level = item.non_tensor_batch.get("g_level", 0.0)
             guidance_steps = item.non_tensor_batch.get("guidance_steps", [])
+            adaptive_id = item.non_tensor_batch.get("adaptive_id", "")
 
             extracted_answer = (
                 reward_extra_info.get("extracted_answers", [""] * n_samples)[i]
@@ -396,8 +599,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             sample = {
                 "step": self.global_steps,
                 "sample_idx": i,
+                "adaptive_id": str(adaptive_id),
                 "g_level": float(g_level) if not isinstance(g_level, float) else g_level,
                 "guidance_mode": self.guidance_mode,
+                "curriculum_method": self.curriculum_method,
                 "guidance_steps_count": len(guidance_steps) if isinstance(guidance_steps, list) else 0,
                 "ground_truth": str(ground_truth),
                 "prompt_text": prompt_text[:1500] + "..." if len(prompt_text) > 1500 else prompt_text,

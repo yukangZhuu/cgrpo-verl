@@ -1,6 +1,6 @@
 # CGRPO Trainer Configuration
-# Supports both standard GRPO (guidance_mode=none) and
-# static-mixture curriculum (guidance_mode=prefix or hint).
+# Supports standard GRPO, static-mixture curriculum, and
+# per-sample adaptive curriculum (AdaBack-style).
 
 defaults:
   - ppo_trainer
@@ -16,6 +16,9 @@ data:
 
   # Guidance mode: "none" (standard GRPO), "prefix", or "hint"
   guidance_mode: "none"
+
+  # Curriculum method: "none" (baseline/mixture), "adaptive" (per-sample AdaBack)
+  curriculum_method: "none"
 
   # Thinking/Answer format tags
   thinking_start: "<think>"
@@ -109,3 +112,10 @@ trainer:
   debug_dump_freq: 20
   debug_dump_dir: "./debug_samples"
   debug_dump_num_samples: 10
+
+# Per-sample adaptive curriculum (only used when curriculum_method=adaptive)
+adaptive_curriculum:
+  tau: 0.4                # reward threshold for rho update
+  p_zero: 0.1             # probability of forcing rho=0 (train-test gap closure)
+  default_rho: 0.5        # initial rho for unseen samples
+  min_step_delta: 1       # minimum guidance step change to avoid stalling

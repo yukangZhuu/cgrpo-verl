@@ -86,6 +86,8 @@ class CurriculumGRPODataset(Dataset):
             f"Invalid guidance_mode: {self.guidance_mode}"
         )
 
+        self.curriculum_method = config.get("curriculum_method", "none")
+
         self._load_data()
         logger.info(
             f"CurriculumGRPODataset loaded {len(self.data)} samples, "
@@ -135,6 +137,25 @@ class CurriculumGRPODataset(Dataset):
         guidance_steps = item.get("guidance_steps", [])
         pass_rate = item.get("pass_rate", -1.0)
 
+        # --- Adaptive curriculum support ---
+        # frozen_g_level: if present, this sample has a fixed guidance level
+        # (used for anchor samples in adaptive mode)
+        frozen_g_level = item.get("frozen_g_level", None)
+        adaptive_id = item.get("adaptive_id", str(index))
+
+        if frozen_g_level is not None:
+            # Anchor sample: compute guidance_steps from frozen level
+            from verl.utils.curriculum import PerSampleCurriculumState
+
+            g_level = float(frozen_g_level)
+            guidance_steps = PerSampleCurriculumState.compute_guidance_steps(
+                steps, g_level
+            )
+        elif self.curriculum_method == "adaptive" and not guidance_steps:
+            # Adaptive non-frozen sample: trainer will fill guidance dynamically.
+            # Use -1 as sentinel so the trainer knows to compute it.
+            g_level = -1.0
+
         gt_answer = str(ground_truth).strip()
 
         raw_prompt = self._build_prompt_messages(question, guidance_steps)
@@ -153,6 +174,8 @@ class CurriculumGRPODataset(Dataset):
             "pass_rate": pass_rate,
             "teacher_answer": teacher_answer,
             "ground_truth": gt_answer,
+            "adaptive_id": adaptive_id,
+            "frozen_g_level": frozen_g_level if frozen_g_level is not None else -1.0,
             "data_source": "cgrpo",
             "reward_model": {
                 "style": "cgrpo",
