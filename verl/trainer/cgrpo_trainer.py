@@ -336,7 +336,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         new_g_levels = []
         new_guidance_steps_list = []
         new_raw_prompts = []
-        adaptive_dynamic_flags: list[bool] = []
 
         for i in range(batch_size):
             item = batch[i]
@@ -348,8 +347,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 steps = steps.tolist()
 
             if frozen >= 0:
-                # Anchor sample — keep existing g_level and guidance
-                adaptive_dynamic_flags.append(False)
                 new_g_levels.append(g_level)
                 new_guidance_steps_list.append(
                     item.non_tensor_batch.get("guidance_steps", [])
@@ -357,9 +354,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 new_raw_prompts.append(item.non_tensor_batch.get("raw_prompt", []))
                 continue
 
-            # Non-frozen: only override when dataset marked this row as adaptive (sentinel -1).
             if g_level >= 0:
-                adaptive_dynamic_flags.append(False)
                 new_g_levels.append(g_level)
                 new_guidance_steps_list.append(
                     item.non_tensor_batch.get("guidance_steps", [])
@@ -368,7 +363,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 continue
 
             num_steps = len(steps) if isinstance(steps, list) else 0
-            adaptive_dynamic_flags.append(True)
             rho = self.adaptive_state.get_rho(adaptive_id, num_steps)
             guidance = PerSampleCurriculumState.compute_guidance_steps(steps, rho)
 
@@ -408,9 +402,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         batch.non_tensor_batch["raw_prompt"] = np.array(
             new_raw_prompts, dtype=object
         )
-        batch.non_tensor_batch["adaptive_dynamic"] = np.array(
-            adaptive_dynamic_flags, dtype=bool
-        )
 
     def _update_adaptive_state(
         self,
@@ -448,15 +439,15 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             if frozen >= 0:
                 continue
 
-            dyn = item.non_tensor_batch.get("adaptive_dynamic", True)
-            if isinstance(dyn, np.ndarray):
-                dyn = bool(dyn.flat[0]) if dyn.size else True
-            else:
-                dyn = bool(dyn)
-            if not dyn:
+            adaptive_id = str(item.non_tensor_batch.get("adaptive_id", str(orig_idx)))
+
+            # Only update samples whose state was created by get_rho() in
+            # _apply_adaptive_guidance.  Custom batch fields like
+            # "adaptive_dynamic" may be dropped by repeat()/union(), so we
+            # use the authoritative source: the adaptive_state dict itself.
+            if adaptive_id not in self.adaptive_state.states:
                 continue
 
-            adaptive_id = str(item.non_tensor_batch.get("adaptive_id", str(orig_idx)))
             steps = item.non_tensor_batch.get("steps", [])
             if isinstance(steps, np.ndarray):
                 steps = steps.tolist()
@@ -465,18 +456,14 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             rollout_accs = acc_list[start:end]
             avg_reward = sum(rollout_accs) / len(rollout_accs) if rollout_accs else 0.0
 
-            s_pre = self.adaptive_state.states.get(adaptive_id)
-            rho_used = float(s_pre["rho"]) if s_pre else float("nan")
-            last_forced_zero = bool(s_pre.get("last_forced_zero", False)) if s_pre else False
-            interval_before = (
-                {
-                    "rho_min": float(s_pre["rho_min"]),
-                    "rho_max": float(s_pre["rho_max"]),
-                    "visits": int(s_pre["visits"]),
-                }
-                if s_pre
-                else None
-            )
+            s_pre = self.adaptive_state.states[adaptive_id]
+            rho_used = float(s_pre["rho"])
+            last_forced_zero = bool(s_pre.get("last_forced_zero", False))
+            interval_before = {
+                "rho_min": float(s_pre["rho_min"]),
+                "rho_max": float(s_pre["rho_max"]),
+                "visits": int(s_pre["visits"]),
+            }
 
             self.adaptive_state.update(adaptive_id, avg_reward, num_steps)
             s_post = self.adaptive_state.states[adaptive_id]
