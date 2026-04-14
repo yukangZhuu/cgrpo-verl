@@ -103,9 +103,6 @@ class PerSampleCurriculumState:
         to reveal.  With probability ``p_zero`` the ratio is forced to 0
         (train-test gap closure).
         """
-        if random.random() < self.p_zero:
-            return 0.0
-
         if sample_id not in self.states:
             self.states[sample_id] = {
                 "rho_min": 0.0,
@@ -115,6 +112,14 @@ class PerSampleCurriculumState:
             }
 
         s = self.states[sample_id]
+
+        if random.random() < self.p_zero:
+            # Must persist rho=0 so :meth:`update` uses the same value as this rollout.
+            s["rho"] = 0.0
+            s["last_forced_zero"] = True
+            return 0.0
+
+        s["last_forced_zero"] = False
         rho_min, rho_max = s["rho_min"], s["rho_max"]
 
         if rho_max <= rho_min:

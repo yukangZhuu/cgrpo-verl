@@ -167,6 +167,7 @@ class CurriculumGRPODataset(Dataset):
         )
 
         return {
+            "question": question,
             "raw_prompt": raw_prompt,
             "steps": steps,
             "guidance_steps": guidance_for_agentloop,

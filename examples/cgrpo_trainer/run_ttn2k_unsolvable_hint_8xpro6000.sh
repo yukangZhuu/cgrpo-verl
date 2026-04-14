@@ -7,6 +7,9 @@
 # Only change: use_kl_loss=False to skip ref model computation (~15-20% speedup).
 set -x
 
+export RAY_TMPDIR=/root/autodl-tmp/ray_tmp
+mkdir -p "$RAY_TMPDIR"
+
 export VLLM_USE_DEEP_GEMM=0
 export VLLM_DEEP_GEMM_WARMUP=skip
 ulimit -u unlimited 2>/dev/null || true

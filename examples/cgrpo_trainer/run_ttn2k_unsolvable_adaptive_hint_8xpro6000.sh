@@ -4,6 +4,9 @@
 # Hardware: 8× RTX PRO 6000 (96GB)
 set -x
 
+export RAY_TMPDIR=/root/autodl-tmp/ray_tmp
+mkdir -p "$RAY_TMPDIR"
+
 export VLLM_USE_DEEP_GEMM=0
 export VLLM_DEEP_GEMM_WARMUP=skip
 ulimit -u unlimited 2>/dev/null || true

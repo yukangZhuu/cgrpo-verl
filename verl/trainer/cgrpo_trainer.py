@@ -205,7 +205,12 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
 
                 # --- Adaptive state update (after reward) ---
                 if self.curriculum_method == "adaptive":
-                    self._update_adaptive_state(batch, reward_extra_info)
+                    self._update_adaptive_state(
+                        batch,
+                        reward_extra_info,
+                        reward_tensor=reward_tensor,
+                        epoch=epoch,
+                    )
 
                 # --- Debug dump ---
                 dump_freq = self.config.trainer.get("debug_dump_freq", 0)
@@ -318,11 +323,12 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
 
     def _apply_adaptive_guidance(self, batch: DataProto) -> None:
         """
-        For each sample in the batch whose g_level == -1 (sentinel from dataset),
+        For each non-frozen sample with g_level == -1 (sentinel from dataset),
         sample a rho from the adaptive state, compute guidance_steps, and
         rebuild raw_prompt if needed (hint mode).
 
         Frozen anchors (frozen_g_level >= 0) are left untouched.
+        Non-frozen rows with g_level >= 0 keep dataset guidance (no AdaBack sampling).
         """
         assert self.adaptive_state is not None
         batch_size = len(batch)
@@ -330,6 +336,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         new_g_levels = []
         new_guidance_steps_list = []
         new_raw_prompts = []
+        adaptive_dynamic_flags: list[bool] = []
 
         for i in range(batch_size):
             item = batch[i]
@@ -342,6 +349,17 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
 
             if frozen >= 0:
                 # Anchor sample — keep existing g_level and guidance
+                adaptive_dynamic_flags.append(False)
+                new_g_levels.append(g_level)
+                new_guidance_steps_list.append(
+                    item.non_tensor_batch.get("guidance_steps", [])
+                )
+                new_raw_prompts.append(item.non_tensor_batch.get("raw_prompt", []))
+                continue
+
+            # Non-frozen: only override when dataset marked this row as adaptive (sentinel -1).
+            if g_level >= 0:
+                adaptive_dynamic_flags.append(False)
                 new_g_levels.append(g_level)
                 new_guidance_steps_list.append(
                     item.non_tensor_batch.get("guidance_steps", [])
@@ -350,6 +368,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 continue
 
             num_steps = len(steps) if isinstance(steps, list) else 0
+            adaptive_dynamic_flags.append(True)
             rho = self.adaptive_state.get_rho(adaptive_id, num_steps)
             guidance = PerSampleCurriculumState.compute_guidance_steps(steps, rho)
 
@@ -389,9 +408,16 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         batch.non_tensor_batch["raw_prompt"] = np.array(
             new_raw_prompts, dtype=object
         )
+        batch.non_tensor_batch["adaptive_dynamic"] = np.array(
+            adaptive_dynamic_flags, dtype=bool
+        )
 
     def _update_adaptive_state(
-        self, batch: DataProto, reward_extra_info: dict
+        self,
+        batch: DataProto,
+        reward_extra_info: dict,
+        reward_tensor: Optional[torch.Tensor] = None,
+        epoch: int = 0,
     ) -> None:
         """
         After reward computation, update the per-sample rho intervals.
@@ -405,8 +431,13 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         if not acc_list:
             return
 
+        if reward_tensor is None:
+            reward_tensor = batch.batch.get("token_level_scores")
+
         batch_size = len(batch)
         num_originals = batch_size // n_rollouts
+        trace_enabled = bool(self.config.trainer.get("adaptive_trace_enable", False))
+        trace_records: list[dict] = []
 
         for orig_idx in range(num_originals):
             start = orig_idx * n_rollouts
@@ -415,6 +446,14 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             item = batch[start]
             frozen = float(item.non_tensor_batch.get("frozen_g_level", -1.0))
             if frozen >= 0:
+                continue
+
+            dyn = item.non_tensor_batch.get("adaptive_dynamic", True)
+            if isinstance(dyn, np.ndarray):
+                dyn = bool(dyn.flat[0]) if dyn.size else True
+            else:
+                dyn = bool(dyn)
+            if not dyn:
                 continue
 
             adaptive_id = str(item.non_tensor_batch.get("adaptive_id", str(orig_idx)))
@@ -426,7 +465,96 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             rollout_accs = acc_list[start:end]
             avg_reward = sum(rollout_accs) / len(rollout_accs) if rollout_accs else 0.0
 
+            s_pre = self.adaptive_state.states.get(adaptive_id)
+            rho_used = float(s_pre["rho"]) if s_pre else float("nan")
+            last_forced_zero = bool(s_pre.get("last_forced_zero", False)) if s_pre else False
+            interval_before = (
+                {
+                    "rho_min": float(s_pre["rho_min"]),
+                    "rho_max": float(s_pre["rho_max"]),
+                    "visits": int(s_pre["visits"]),
+                }
+                if s_pre
+                else None
+            )
+
             self.adaptive_state.update(adaptive_id, avg_reward, num_steps)
+            s_post = self.adaptive_state.states[adaptive_id]
+            interval_after = {
+                "rho_min": float(s_post["rho_min"]),
+                "rho_max": float(s_post["rho_max"]),
+                "visits": int(s_post["visits"]),
+            }
+
+            rollout_rewards = []
+            if reward_tensor is not None:
+                for j in range(start, end):
+                    rollout_rewards.append(float(reward_tensor[j].sum().item()))
+
+            if trace_enabled:
+                g_count = len(
+                    PerSampleCurriculumState.compute_guidance_steps(steps, rho_used)
+                )
+                trace_records.append(
+                    {
+                        "adaptive_id": adaptive_id,
+                        "frozen_g_level": frozen,
+                        "num_teacher_steps": num_steps,
+                        "rho_used": rho_used,
+                        "last_forced_zero": last_forced_zero,
+                        "guidance_steps_count": g_count,
+                        "avg_acc_rollouts": float(avg_reward),
+                        "rollout_accs": [float(x) for x in rollout_accs],
+                        "rollout_reward_sums": rollout_rewards,
+                        "tau": float(self.adaptive_state.tau),
+                        "avg_reward_vs_tau": "below" if avg_reward < self.adaptive_state.tau else "gte",
+                        "interval_before": interval_before,
+                        "interval_after": interval_after,
+                    }
+                )
+
+        if trace_enabled and trace_records:
+            self._append_adaptive_trace_jsonl(
+                global_step=self.global_steps,
+                epoch=epoch,
+                num_originals_in_batch=num_originals,
+                records=trace_records,
+            )
+
+    def _append_adaptive_trace_jsonl(
+        self,
+        global_step: int,
+        epoch: int,
+        num_originals_in_batch: int,
+        records: list[dict],
+    ) -> None:
+        """Append one JSON line per training step for adaptive dry-runs."""
+        max_steps = int(self.config.trainer.get("adaptive_trace_max_steps", 0))
+        if max_steps > 0 and global_step > max_steps:
+            return
+
+        trace_dir = self.config.trainer.get("adaptive_trace_dir", "./adaptive_trace")
+        os.makedirs(trace_dir, exist_ok=True)
+        path = os.path.join(trace_dir, "adaptive_train_trace.jsonl")
+
+        payload = {
+            "global_step": global_step,
+            "epoch": epoch,
+            "experiment_name": self.config.trainer.get("experiment_name", ""),
+            "curriculum_method": self.curriculum_method,
+            "guidance_mode": self.guidance_mode,
+            "n_rollouts": int(self.config.actor_rollout_ref.rollout.n),
+            "num_originals_in_batch": num_originals_in_batch,
+            "num_adaptive_traced_samples": len(records),
+            "samples": records,
+        }
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+        logger.info(
+            "Adaptive trace appended (%s samples) -> %s",
+            len(records),
+            path,
+        )
 
     @staticmethod
     def _extract_question_from_prompt(raw_prompt) -> str:
