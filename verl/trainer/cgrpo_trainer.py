@@ -166,8 +166,12 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 )
 
                 # --- Adaptive guidance (before generation) ---
+                # Snapshot per-sample metadata BEFORE _get_gen_batch(),
+                # which pops non_tensor_batch fields from batch.
+                adaptive_snapshot: Optional[list[dict]] = None
                 if self.curriculum_method == "adaptive":
                     self._apply_adaptive_guidance(batch)
+                    adaptive_snapshot = self._snapshot_adaptive_metadata(batch)
 
                 # --- Generate ---
                 gen_batch = self._get_gen_batch(batch)
@@ -204,12 +208,13 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 batch.batch["token_level_rewards"] = reward_tensor
 
                 # --- Adaptive state update (after reward) ---
-                if self.curriculum_method == "adaptive":
+                if self.curriculum_method == "adaptive" and adaptive_snapshot is not None:
                     self._update_adaptive_state(
                         batch,
                         reward_extra_info,
                         reward_tensor=reward_tensor,
                         epoch=epoch,
+                        adaptive_snapshot=adaptive_snapshot,
                     )
 
                 # --- Debug dump ---
@@ -315,6 +320,11 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     val_metrics = self._validate()
                     tracking.log(data=val_metrics, step=self.global_steps)
 
+                if self.global_steps >= self.total_training_steps:
+                    break
+            if self.global_steps >= self.total_training_steps:
+                break
+
         progress_bar.close()
 
     # ------------------------------------------------------------------
@@ -403,17 +413,47 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             new_raw_prompts, dtype=object
         )
 
+    def _snapshot_adaptive_metadata(self, batch: DataProto) -> list[dict]:
+        """
+        Capture per-sample adaptive metadata BEFORE ``_get_gen_batch()`` pops
+        non_tensor_batch fields.  The returned list (indexed by pre-repeat
+        batch position) is used later by ``_update_adaptive_state()``.
+        """
+        batch_size = len(batch)
+        snapshot: list[dict] = []
+        for i in range(batch_size):
+            item = batch[i]
+            adaptive_id = str(item.non_tensor_batch.get("adaptive_id", str(i)))
+            frozen = float(item.non_tensor_batch.get("frozen_g_level", -1.0))
+            g_level = float(item.non_tensor_batch.get("g_level", 0.0))
+            steps = item.non_tensor_batch.get("steps", [])
+            if isinstance(steps, np.ndarray):
+                steps = steps.tolist()
+            num_steps = len(steps) if isinstance(steps, list) else 0
+            is_adaptive = (frozen < 0) and (adaptive_id in self.adaptive_state.states)
+            snapshot.append({
+                "adaptive_id": adaptive_id,
+                "frozen_g_level": frozen,
+                "g_level": g_level,
+                "num_steps": num_steps,
+                "is_adaptive": is_adaptive,
+            })
+        return snapshot
+
     def _update_adaptive_state(
         self,
         batch: DataProto,
         reward_extra_info: dict,
         reward_tensor: Optional[torch.Tensor] = None,
         epoch: int = 0,
+        adaptive_snapshot: Optional[list[dict]] = None,
     ) -> None:
         """
         After reward computation, update the per-sample rho intervals.
-        The batch has been repeat()ed by rollout.n, so we aggregate per
-        original sample using adaptive_id.
+
+        Uses ``adaptive_snapshot`` (captured before ``_get_gen_batch()``
+        popped the non_tensor_batch fields) as the authoritative source
+        for adaptive_id, num_steps, and frozen status.
         """
         assert self.adaptive_state is not None
         n_rollouts = self.config.actor_rollout_ref.rollout.n
@@ -430,28 +470,20 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         trace_enabled = bool(self.config.trainer.get("adaptive_trace_enable", False))
         trace_records: list[dict] = []
 
+        if adaptive_snapshot is None:
+            logger.warning("_update_adaptive_state called without snapshot — skipping")
+            return
+
         for orig_idx in range(num_originals):
             start = orig_idx * n_rollouts
             end = start + n_rollouts
 
-            item = batch[start]
-            frozen = float(item.non_tensor_batch.get("frozen_g_level", -1.0))
-            if frozen >= 0:
+            meta = adaptive_snapshot[orig_idx]
+            if not meta["is_adaptive"]:
                 continue
 
-            adaptive_id = str(item.non_tensor_batch.get("adaptive_id", str(orig_idx)))
-
-            # Only update samples whose state was created by get_rho() in
-            # _apply_adaptive_guidance.  Custom batch fields like
-            # "adaptive_dynamic" may be dropped by repeat()/union(), so we
-            # use the authoritative source: the adaptive_state dict itself.
-            if adaptive_id not in self.adaptive_state.states:
-                continue
-
-            steps = item.non_tensor_batch.get("steps", [])
-            if isinstance(steps, np.ndarray):
-                steps = steps.tolist()
-            num_steps = len(steps) if isinstance(steps, list) else 0
+            adaptive_id = meta["adaptive_id"]
+            num_steps = meta["num_steps"]
 
             rollout_accs = acc_list[start:end]
             avg_reward = sum(rollout_accs) / len(rollout_accs) if rollout_accs else 0.0
@@ -479,13 +511,12 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     rollout_rewards.append(float(reward_tensor[j].sum().item()))
 
             if trace_enabled:
-                g_count = len(
-                    PerSampleCurriculumState.compute_guidance_steps(steps, rho_used)
-                )
+                g_count = round(rho_used * num_steps)
+                g_count = max(0, min(g_count, num_steps - 1)) if num_steps > 0 else 0
                 trace_records.append(
                     {
                         "adaptive_id": adaptive_id,
-                        "frozen_g_level": frozen,
+                        "frozen_g_level": meta["frozen_g_level"],
                         "num_teacher_steps": num_steps,
                         "rho_used": rho_used,
                         "last_forced_zero": last_forced_zero,
