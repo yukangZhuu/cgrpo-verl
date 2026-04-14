@@ -320,11 +320,6 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     val_metrics = self._validate()
                     tracking.log(data=val_metrics, step=self.global_steps)
 
-                if self.global_steps >= self.total_training_steps:
-                    break
-            if self.global_steps >= self.total_training_steps:
-                break
-
         progress_bar.close()
 
     # ------------------------------------------------------------------
@@ -555,6 +550,29 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         os.makedirs(trace_dir, exist_ok=True)
         path = os.path.join(trace_dir, "adaptive_train_trace.jsonl")
 
+        rhos = [r["rho_used"] for r in records]
+        accs = [r["avg_acc_rollouts"] for r in records]
+        visits = [r["interval_after"]["visits"] for r in records]
+        g_counts = [r["guidance_steps_count"] for r in records]
+        n_gte = sum(1 for r in records if r["avg_reward_vs_tau"] == "gte")
+        n_below = len(records) - n_gte
+        n_forced_zero = sum(1 for r in records if r["last_forced_zero"])
+
+        summary = {
+            "n_adaptive": len(records),
+            "n_frozen_skipped": num_originals_in_batch - len(records),
+            "n_gte_tau": n_gte,
+            "n_below_tau": n_below,
+            "n_forced_zero": n_forced_zero,
+            "mean_rho": round(sum(rhos) / len(rhos), 4) if rhos else 0,
+            "min_rho": round(min(rhos), 4) if rhos else 0,
+            "max_rho": round(max(rhos), 4) if rhos else 0,
+            "mean_acc": round(sum(accs) / len(accs), 4) if accs else 0,
+            "mean_guidance_steps": round(sum(g_counts) / len(g_counts), 2) if g_counts else 0,
+            "mean_visits": round(sum(visits) / len(visits), 2) if visits else 0,
+            "max_visits": max(visits) if visits else 0,
+        }
+
         payload = {
             "global_step": global_step,
             "epoch": epoch,
@@ -564,8 +582,10 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             "n_rollouts": int(self.config.actor_rollout_ref.rollout.n),
             "num_originals_in_batch": num_originals_in_batch,
             "num_adaptive_traced_samples": len(records),
-            "samples": records,
+            "step_summary": summary,
         }
+        if self.config.trainer.get("adaptive_trace_verbose", False):
+            payload["samples"] = records
         with open(path, "a", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False) + "\n")
         logger.info(

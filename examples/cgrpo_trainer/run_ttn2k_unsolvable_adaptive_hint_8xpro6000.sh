@@ -41,7 +41,7 @@ python3 -m verl.trainer.main_cgrpo \
     data.curriculum_method=adaptive \
     \
     adaptive_curriculum.tau=0.4 \
-    adaptive_curriculum.p_zero=0.1 \
+    adaptive_curriculum.p_zero=0.05 \
     adaptive_curriculum.default_rho=0.5 \
     adaptive_curriculum.min_step_delta=1 \
     \
@@ -57,7 +57,11 @@ python3 -m verl.trainer.main_cgrpo \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=4 \
     actor_rollout_ref.actor.use_dynamic_bsz=True \
     actor_rollout_ref.actor.ppo_max_token_len_per_gpu=48000 \
-    actor_rollout_ref.actor.use_kl_loss=False \
+    actor_rollout_ref.actor.use_kl_loss=True \
+    actor_rollout_ref.actor.kl_loss_coef=0.001 \
+    actor_rollout_ref.actor.kl_loss_type=low_var_kl \
+    actor_rollout_ref.actor.clip_ratio_low=0.2 \
+    actor_rollout_ref.actor.clip_ratio_high=0.28 \
     actor_rollout_ref.actor.entropy_coeff=0 \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     actor_rollout_ref.actor.fsdp_config.param_offload=False \
@@ -67,7 +71,7 @@ python3 -m verl.trainer.main_cgrpo \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=16 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
     actor_rollout_ref.rollout.name=vllm \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.68 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.70 \
     actor_rollout_ref.rollout.n=8 \
     actor_rollout_ref.rollout.temperature=1.0 \
     actor_rollout_ref.rollout.top_p=1.0 \
@@ -99,5 +103,5 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.val_before_train=True \
     trainer.debug_dump_freq=20 \
     trainer.debug_dump_dir=debug_samples/ttn2k_unsolvable_adaptive_hint \
-    trainer.debug_dump_num_samples=10 \
+    trainer.debug_dump_num_samples=5 \
     $@
