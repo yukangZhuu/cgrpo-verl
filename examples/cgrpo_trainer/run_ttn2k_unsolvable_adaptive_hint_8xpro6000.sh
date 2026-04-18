@@ -14,6 +14,10 @@ ulimit -n 65536     2>/dev/null || true
 export OMP_NUM_THREADS=4
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
+# Resume wandb to the same run (step 0~900 preserved, 901+ overwritten)
+export WANDB_RUN_ID=etzbveve
+export WANDB_RESUME=allow
+
 export VERL_FILE_LOGGER_PATH=logs/ttn2k_unsolvable_adaptive_hint_8xpro6000_metrics.jsonl
 mkdir -p logs
 

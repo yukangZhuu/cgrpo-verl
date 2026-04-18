@@ -17,6 +17,7 @@ Reward Manager for Curriculum-GRPO.
 
 import logging
 import re
+import signal
 from typing import Any, Optional
 
 import numpy as np
@@ -323,6 +324,9 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         2. Numeric comparison (float, tolerance 1e-6)
         3. math_verify with all extraction configs (LaTeX, Expr, String)
         4. math_verify with boxed-wrapped LaTeX parsing
+
+        A per-call SIGALRM guard (default 30s) protects against
+        math_verify / sympy hangs that survive the library's own timeout.
         """
         if not extracted or not extracted.strip() or not ground_truth or not ground_truth.strip():
             return False
@@ -340,27 +344,71 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         except (ValueError, OverflowError):
             pass
 
+        prev_handler = None
+        prev_alarm = 0
         try:
-            configs = [LatexExtractionConfig(), ExprExtractionConfig(), StringExtractionConfig()]
-            parsed_gt = parse(ground_truth, extraction_config=configs)
-            parsed_ma = parse(extracted, extraction_config=configs)
-            if parsed_gt and parsed_ma and verify(parsed_gt, parsed_ma):
-                return True
-        except Exception:
-            pass
+            def _alarm_handler(signum, frame):
+                raise TimeoutError("_check_answer: math_verify timed out")
+            prev_handler = signal.signal(signal.SIGALRM, _alarm_handler)
+            prev_alarm = signal.alarm(60)
+        except (ValueError, OSError):
+            prev_handler = None
 
         try:
-            wrapped_gt = f'\\boxed{{{ground_truth.strip()}}}'
-            wrapped_ma = f'\\boxed{{{extracted.strip()}}}'
-            parsed_gt = parse(wrapped_gt, extraction_config=[LatexExtractionConfig()])
-            parsed_ma = parse(wrapped_ma, extraction_config=[LatexExtractionConfig()])
-            if parsed_gt and parsed_ma and verify(parsed_gt, parsed_ma):
-                return True
-        except Exception:
-            pass
+            try:
+                configs = [LatexExtractionConfig(), ExprExtractionConfig(), StringExtractionConfig()]
+                parsed_gt = parse(ground_truth, extraction_config=configs)
+                parsed_ma = parse(extracted, extraction_config=configs)
+                if parsed_gt and parsed_ma and verify(parsed_gt, parsed_ma):
+                    return True
+            except Exception:
+                pass
+
+            try:
+                wrapped_gt = f'\\boxed{{{ground_truth.strip()}}}'
+                wrapped_ma = f'\\boxed{{{extracted.strip()}}}'
+                parsed_gt = parse(wrapped_gt, extraction_config=[LatexExtractionConfig()])
+                parsed_ma = parse(wrapped_ma, extraction_config=[LatexExtractionConfig()])
+                if parsed_gt and parsed_ma and verify(parsed_gt, parsed_ma):
+                    return True
+            except Exception:
+                pass
+        except TimeoutError:
+            logger.warning(
+                "math_verify timed out for gt=%r vs extracted=%r",
+                ground_truth[:80], extracted[:80],
+            )
+            self._log_timeout_to_file(ground_truth, extracted)
+        finally:
+            try:
+                signal.alarm(0)
+                if prev_handler is not None:
+                    signal.signal(signal.SIGALRM, prev_handler)
+                if prev_alarm > 0:
+                    signal.alarm(prev_alarm)
+            except (ValueError, OSError):
+                pass
 
         return False
-    
+
+    def _log_timeout_to_file(self, ground_truth: str, extracted: str) -> None:
+        """Append a record to a local file whenever math_verify times out."""
+        import datetime, json, os
+        log_path = os.environ.get(
+            "MATH_VERIFY_TIMEOUT_LOG", "logs/math_verify_timeouts.jsonl"
+        )
+        os.makedirs(os.path.dirname(log_path) if os.path.dirname(log_path) else ".", exist_ok=True)
+        record = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "ground_truth": ground_truth[:500],
+            "extracted": extracted[:500],
+        }
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except Exception:
+            pass
+
     def _check_format(self, text: str) -> bool:
         """
         Check if response has valid format.
