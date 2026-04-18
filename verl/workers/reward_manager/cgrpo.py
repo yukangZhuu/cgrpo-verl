@@ -15,9 +15,9 @@
 Reward Manager for Curriculum-GRPO.
 """
 
+import gc
 import logging
 import re
-import signal
 from typing import Any, Optional
 
 import numpy as np
@@ -25,9 +25,11 @@ import torch
 
 try:
     from math_verify import parse, verify, LatexExtractionConfig, ExprExtractionConfig, StringExtractionConfig
+    from math_verify.errors import TimeoutException as MathVerifyTimeout
     MATH_VERIFY_AVAILABLE = True
 except ImportError:
     MATH_VERIFY_AVAILABLE = False
+    MathVerifyTimeout = None
 
 from verl.workers.reward_manager.abstract import AbstractRewardManager
 
@@ -315,6 +317,27 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         
         return ""
     
+    @staticmethod
+    def _gc_safe_verify(parsed_gt, parsed_ma) -> bool:
+        """Run ``math_verify.verify`` with GC disabled.
+
+        ``math_verify`` uses ``signal.SIGALRM`` for its internal timeout.
+        If the alarm fires while Python's GC is executing a weak-ref
+        finalizer the resulting exception is silently swallowed, leaving
+        the underlying sympy computation running forever.
+
+        Disabling GC for the duration of the ``verify()`` call ensures the
+        alarm is always delivered to user code where it can propagate
+        normally.
+        """
+        gc_was_enabled = gc.isenabled()
+        gc.disable()
+        try:
+            return verify(parsed_gt, parsed_ma)
+        finally:
+            if gc_was_enabled:
+                gc.enable()
+
     def _check_answer(self, extracted: str, ground_truth: str) -> bool:
         """
         Check if extracted answer matches ground truth.
@@ -324,9 +347,6 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         2. Numeric comparison (float, tolerance 1e-6)
         3. math_verify with all extraction configs (LaTeX, Expr, String)
         4. math_verify with boxed-wrapped LaTeX parsing
-
-        A per-call SIGALRM guard (default 30s) protects against
-        math_verify / sympy hangs that survive the library's own timeout.
         """
         if not extracted or not extracted.strip() or not ground_truth or not ground_truth.strip():
             return False
@@ -344,70 +364,28 @@ class CurriculumGRPORewardManager(AbstractRewardManager):
         except (ValueError, OverflowError):
             pass
 
-        prev_handler = None
-        prev_alarm = 0
-        try:
-            def _alarm_handler(signum, frame):
-                raise TimeoutError("_check_answer: math_verify timed out")
-            prev_handler = signal.signal(signal.SIGALRM, _alarm_handler)
-            prev_alarm = signal.alarm(60)
-        except (ValueError, OSError):
-            prev_handler = None
+        _catchable = (Exception,) if MathVerifyTimeout is None else (Exception, MathVerifyTimeout)
 
         try:
-            try:
-                configs = [LatexExtractionConfig(), ExprExtractionConfig(), StringExtractionConfig()]
-                parsed_gt = parse(ground_truth, extraction_config=configs)
-                parsed_ma = parse(extracted, extraction_config=configs)
-                if parsed_gt and parsed_ma and verify(parsed_gt, parsed_ma):
-                    return True
-            except Exception:
-                pass
+            configs = [LatexExtractionConfig(), ExprExtractionConfig(), StringExtractionConfig()]
+            parsed_gt = parse(ground_truth, extraction_config=configs)
+            parsed_ma = parse(extracted, extraction_config=configs)
+            if parsed_gt and parsed_ma and self._gc_safe_verify(parsed_gt, parsed_ma):
+                return True
+        except _catchable:
+            pass
 
-            try:
-                wrapped_gt = f'\\boxed{{{ground_truth.strip()}}}'
-                wrapped_ma = f'\\boxed{{{extracted.strip()}}}'
-                parsed_gt = parse(wrapped_gt, extraction_config=[LatexExtractionConfig()])
-                parsed_ma = parse(wrapped_ma, extraction_config=[LatexExtractionConfig()])
-                if parsed_gt and parsed_ma and verify(parsed_gt, parsed_ma):
-                    return True
-            except Exception:
-                pass
-        except TimeoutError:
-            logger.warning(
-                "math_verify timed out for gt=%r vs extracted=%r",
-                ground_truth[:80], extracted[:80],
-            )
-            self._log_timeout_to_file(ground_truth, extracted)
-        finally:
-            try:
-                signal.alarm(0)
-                if prev_handler is not None:
-                    signal.signal(signal.SIGALRM, prev_handler)
-                if prev_alarm > 0:
-                    signal.alarm(prev_alarm)
-            except (ValueError, OSError):
-                pass
+        try:
+            wrapped_gt = f'\\boxed{{{ground_truth.strip()}}}'
+            wrapped_ma = f'\\boxed{{{extracted.strip()}}}'
+            parsed_gt = parse(wrapped_gt, extraction_config=[LatexExtractionConfig()])
+            parsed_ma = parse(wrapped_ma, extraction_config=[LatexExtractionConfig()])
+            if parsed_gt and parsed_ma and self._gc_safe_verify(parsed_gt, parsed_ma):
+                return True
+        except _catchable:
+            pass
 
         return False
-
-    def _log_timeout_to_file(self, ground_truth: str, extracted: str) -> None:
-        """Append a record to a local file whenever math_verify times out."""
-        import datetime, json, os
-        log_path = os.environ.get(
-            "MATH_VERIFY_TIMEOUT_LOG", "logs/math_verify_timeouts.jsonl"
-        )
-        os.makedirs(os.path.dirname(log_path) if os.path.dirname(log_path) else ".", exist_ok=True)
-        record = {
-            "timestamp": datetime.datetime.now().isoformat(),
-            "ground_truth": ground_truth[:500],
-            "extracted": extracted[:500],
-        }
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(record, ensure_ascii=False) + "\n")
-        except Exception:
-            pass
 
     def _check_format(self, text: str) -> bool:
         """
