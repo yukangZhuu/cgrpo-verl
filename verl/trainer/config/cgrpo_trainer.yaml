@@ -17,7 +17,11 @@ data:
   # Guidance mode: "none" (standard GRPO), "prefix", or "hint"
   guidance_mode: "none"
 
-  # Curriculum method: "none" (baseline/mixture), "adaptive" (per-sample AdaBack)
+  # Curriculum method:
+  #   "none"      — baseline GRPO (no curriculum state)
+  #   "mixture"   — static g_level mixture (R3-style); levels come from dataset
+  #   "adaptive"  — per-sample AdaBack (interval [rho_min, rho_max] + tau updates)
+  #   "mfc"       — Monotone Frontier Curriculum (point rho_star + ratchet / probe)
   curriculum_method: "none"
 
   # Thinking/Answer format tags
@@ -125,3 +129,11 @@ adaptive_curriculum:
   p_zero: 0.1             # probability of forcing rho=0 (train-test gap closure)
   default_rho: 0.5        # initial rho for unseen samples
   min_step_delta: 1       # minimum guidance step change to avoid stalling
+
+# Monotone Frontier Curriculum (only used when curriculum_method=mfc)
+# See 第三轮实验/MFC_算法设计_spec.md for the full algorithm spec.
+mfc_curriculum:
+  p_probe: 0.25           # per-visit probability of probing below the current frontier
+  safety_K: 3             # consecutive exploit failures at rho_star before a safety regression
+  delta_safe: 0.1         # regression step size applied when the safety valve fires
+  default_rho_star: 1.0   # initial frontier (full guidance) for unseen samples

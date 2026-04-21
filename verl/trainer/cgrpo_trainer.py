@@ -17,6 +17,7 @@ Extends RayPPOTrainer for:
   - standard GRPO          (curriculum_method=none)
   - static-mixture GRPO    (curriculum_method=mixture)
   - per-sample adaptive    (curriculum_method=adaptive, AdaBack-style)
+  - monotone frontier      (curriculum_method=mfc, Monotone Frontier Curriculum)
 """
 
 import json
@@ -35,7 +36,11 @@ import uuid
 from verl import DataProto
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer, compute_advantage
 from verl.trainer.ppo.metric_utils import compute_data_metrics
-from verl.utils.curriculum import TrainingMetricsTracker, PerSampleCurriculumState
+from verl.utils.curriculum import (
+    TrainingMetricsTracker,
+    PerSampleCurriculumState,
+    MonotoneFrontierCurriculumState,
+)
 from verl.utils.dataset.curriculum_dataset import CurriculumGRPODataset
 from verl.workers.reward_manager.cgrpo import CurriculumGRPORewardManager
 
@@ -95,8 +100,15 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         self.curriculum_method = self.config.data.get("curriculum_method", "none")
         self._training_start_time = None
 
-        # --- Adaptive curriculum state (only when curriculum_method=adaptive) ---
+        # --- Per-sample curriculum state ---
+        # At most one of these is active at a time.  The unified pointer
+        # ``self.curriculum_state`` (below) is what hooks / checkpoints /
+        # metrics should refer to; the typed ``adaptive_state`` /
+        # ``mfc_state`` fields are kept for code paths that need the
+        # concrete type.
         self.adaptive_state: Optional[PerSampleCurriculumState] = None
+        self.mfc_state: Optional[MonotoneFrontierCurriculumState] = None
+
         if self.curriculum_method == "adaptive":
             ac = self.config.get("adaptive_curriculum", {})
             self.adaptive_state = PerSampleCurriculumState(
@@ -109,12 +121,40 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 f"Adaptive curriculum enabled: tau={self.adaptive_state.tau}, "
                 f"p_zero={self.adaptive_state.p_zero}"
             )
+        elif self.curriculum_method == "mfc":
+            mc = self.config.get("mfc_curriculum", {})
+            self.mfc_state = MonotoneFrontierCurriculumState(
+                p_probe=mc.get("p_probe", 0.25),
+                safety_K=mc.get("safety_K", 3),
+                delta_safe=mc.get("delta_safe", 0.1),
+                default_rho_star=mc.get("default_rho_star", 1.0),
+                n_rollouts=int(self.config.actor_rollout_ref.rollout.n),
+            )
+            logger.info(
+                f"MFC curriculum enabled: p_probe={self.mfc_state.p_probe}, "
+                f"safety_K={self.mfc_state.safety_K}, "
+                f"delta_safe={self.mfc_state.delta_safe}, "
+                f"epsilon={self.mfc_state.epsilon:.4f}"
+            )
 
         logger.info(
             f"CurriculumGRPOTrainer initialized: "
             f"guidance_mode={self.guidance_mode}, "
             f"curriculum_method={self.curriculum_method}"
         )
+
+    # ------------------------------------------------------------------
+    # Polymorphic accessors (hide adaptive vs. mfc from call sites)
+    # ------------------------------------------------------------------
+
+    @property
+    def curriculum_state(self):
+        """Return the active per-sample curriculum state, or ``None``."""
+        return self.adaptive_state or self.mfc_state
+
+    @property
+    def _uses_per_sample_curriculum(self) -> bool:
+        return self.curriculum_method in ("adaptive", "mfc")
 
     # ------------------------------------------------------------------
     # Main training loop
@@ -165,11 +205,11 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     dtype=object,
                 )
 
-                # --- Adaptive guidance (before generation) ---
+                # --- Curriculum guidance (before generation) ---
                 # Snapshot per-sample metadata BEFORE _get_gen_batch(),
                 # which pops non_tensor_batch fields from batch.
                 adaptive_snapshot: Optional[list[dict]] = None
-                if self.curriculum_method == "adaptive":
+                if self._uses_per_sample_curriculum:
                     self._apply_adaptive_guidance(batch)
                     adaptive_snapshot = self._snapshot_adaptive_metadata(batch)
 
@@ -207,8 +247,8 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 batch.batch["token_level_scores"] = reward_tensor
                 batch.batch["token_level_rewards"] = reward_tensor
 
-                # --- Adaptive state update (after reward) ---
-                if self.curriculum_method == "adaptive" and adaptive_snapshot is not None:
+                # --- Curriculum state update (after reward) ---
+                if self._uses_per_sample_curriculum and adaptive_snapshot is not None:
                     self._update_adaptive_state(
                         batch,
                         reward_extra_info,
@@ -285,8 +325,8 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 )
                 metrics["training/overlong_rate"] = overlong_rate
 
-                if self.adaptive_state is not None:
-                    metrics.update(self.adaptive_state.get_metrics())
+                if self.curriculum_state is not None:
+                    metrics.update(self.curriculum_state.get_metrics())
 
                 metrics.update(
                     {
@@ -323,19 +363,20 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         progress_bar.close()
 
     # ------------------------------------------------------------------
-    # Adaptive curriculum hooks
+    # Per-sample curriculum hooks (shared between AdaBack and MFC)
     # ------------------------------------------------------------------
 
     def _apply_adaptive_guidance(self, batch: DataProto) -> None:
         """
         For each non-frozen sample with g_level == -1 (sentinel from dataset),
-        sample a rho from the adaptive state, compute guidance_steps, and
-        rebuild raw_prompt if needed (hint mode).
+        sample a rho from the active curriculum state, compute guidance_steps,
+        and rebuild raw_prompt if needed (hint mode).
 
         Frozen anchors (frozen_g_level >= 0) are left untouched.
-        Non-frozen rows with g_level >= 0 keep dataset guidance (no AdaBack sampling).
+        Non-frozen rows with g_level >= 0 keep dataset guidance (no sampling).
         """
-        assert self.adaptive_state is not None
+        state = self.curriculum_state
+        assert state is not None, "curriculum_state unavailable in guidance hook"
         batch_size = len(batch)
 
         new_g_levels = []
@@ -368,7 +409,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 continue
 
             num_steps = len(steps) if isinstance(steps, list) else 0
-            rho = self.adaptive_state.get_rho(adaptive_id, num_steps)
+            rho = state.get_rho(adaptive_id, num_steps)
             guidance = PerSampleCurriculumState.compute_guidance_steps(steps, rho)
 
             new_g_levels.append(rho)
@@ -410,10 +451,16 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
 
     def _snapshot_adaptive_metadata(self, batch: DataProto) -> list[dict]:
         """
-        Capture per-sample adaptive metadata BEFORE ``_get_gen_batch()`` pops
+        Capture per-sample curriculum metadata BEFORE ``_get_gen_batch()`` pops
         non_tensor_batch fields.  The returned list (indexed by pre-repeat
         batch position) is used later by ``_update_adaptive_state()``.
+
+        ``is_adaptive`` means "this sample participates in the active
+        per-sample curriculum (AdaBack or MFC)"; anchors / static rows are
+        filtered out by the frozen-or-registered check.
         """
+        state = self.curriculum_state
+        assert state is not None, "curriculum_state unavailable in snapshot hook"
         batch_size = len(batch)
         snapshot: list[dict] = []
         for i in range(batch_size):
@@ -425,7 +472,7 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             if isinstance(steps, np.ndarray):
                 steps = steps.tolist()
             num_steps = len(steps) if isinstance(steps, list) else 0
-            is_adaptive = (frozen < 0) and (adaptive_id in self.adaptive_state.states)
+            is_adaptive = (frozen < 0) and (adaptive_id in state.states)
             snapshot.append({
                 "adaptive_id": adaptive_id,
                 "frozen_g_level": frozen,
@@ -444,13 +491,15 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         adaptive_snapshot: Optional[list[dict]] = None,
     ) -> None:
         """
-        After reward computation, update the per-sample rho intervals.
+        After reward computation, update per-sample curriculum state for the
+        active method (AdaBack or MFC).
 
         Uses ``adaptive_snapshot`` (captured before ``_get_gen_batch()``
         popped the non_tensor_batch fields) as the authoritative source
         for adaptive_id, num_steps, and frozen status.
         """
-        assert self.adaptive_state is not None
+        state = self.curriculum_state
+        assert state is not None, "curriculum_state unavailable in update hook"
         n_rollouts = self.config.actor_rollout_ref.rollout.n
 
         acc_list = reward_extra_info.get("acc", [])
@@ -469,6 +518,8 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             logger.warning("_update_adaptive_state called without snapshot — skipping")
             return
 
+        is_mfc = self.mfc_state is not None
+
         for orig_idx in range(num_originals):
             start = orig_idx * n_rollouts
             end = start + n_rollouts
@@ -483,22 +534,47 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             rollout_accs = acc_list[start:end]
             avg_reward = sum(rollout_accs) / len(rollout_accs) if rollout_accs else 0.0
 
-            s_pre = self.adaptive_state.states[adaptive_id]
-            rho_used = float(s_pre["rho"])
-            last_forced_zero = bool(s_pre.get("last_forced_zero", False))
-            interval_before = {
-                "rho_min": float(s_pre["rho_min"]),
-                "rho_max": float(s_pre["rho_max"]),
-                "visits": int(s_pre["visits"]),
-            }
+            s_pre = state.states[adaptive_id]
+            rho_used = float(s_pre.get("rho", 0.0))
 
-            self.adaptive_state.update(adaptive_id, avg_reward, num_steps)
-            s_post = self.adaptive_state.states[adaptive_id]
-            interval_after = {
-                "rho_min": float(s_post["rho_min"]),
-                "rho_max": float(s_post["rho_max"]),
-                "visits": int(s_post["visits"]),
-            }
+            if is_mfc:
+                pre_snapshot = {
+                    "rho_star": float(s_pre["rho_star"]),
+                    "mode": str(s_pre.get("mode", "exploit")),
+                    "safety_counter": int(s_pre["safety_counter"]),
+                    "safety_triggered_total": int(s_pre["safety_triggered_total"]),
+                    "visits": int(s_pre["visits"]),
+                }
+            else:
+                pre_snapshot = {
+                    "rho_min": float(s_pre["rho_min"]),
+                    "rho_max": float(s_pre["rho_max"]),
+                    "visits": int(s_pre["visits"]),
+                    "last_forced_zero": bool(s_pre.get("last_forced_zero", False)),
+                }
+
+            state.update(adaptive_id, avg_reward, num_steps)
+            s_post = state.states[adaptive_id]
+
+            if is_mfc:
+                post_snapshot = {
+                    "rho_star": float(s_post["rho_star"]),
+                    "safety_counter": int(s_post["safety_counter"]),
+                    "safety_triggered_total": int(s_post["safety_triggered_total"]),
+                    "visits": int(s_post["visits"]),
+                    "last_success": bool(s_post.get("last_success", False)),
+                }
+                safety_triggered = (
+                    post_snapshot["safety_triggered_total"]
+                    > pre_snapshot["safety_triggered_total"]
+                )
+            else:
+                post_snapshot = {
+                    "rho_min": float(s_post["rho_min"]),
+                    "rho_max": float(s_post["rho_max"]),
+                    "visits": int(s_post["visits"]),
+                }
+                safety_triggered = False
 
             rollout_rewards = []
             if reward_tensor is not None:
@@ -508,23 +584,33 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             if trace_enabled:
                 g_count = round(rho_used * num_steps)
                 g_count = max(0, min(g_count, num_steps - 1)) if num_steps > 0 else 0
-                trace_records.append(
-                    {
-                        "adaptive_id": adaptive_id,
-                        "frozen_g_level": meta["frozen_g_level"],
-                        "num_teacher_steps": num_steps,
-                        "rho_used": rho_used,
-                        "last_forced_zero": last_forced_zero,
-                        "guidance_steps_count": g_count,
-                        "avg_acc_rollouts": float(avg_reward),
-                        "rollout_accs": [float(x) for x in rollout_accs],
-                        "rollout_reward_sums": rollout_rewards,
-                        "tau": float(self.adaptive_state.tau),
-                        "avg_reward_vs_tau": "below" if avg_reward < self.adaptive_state.tau else "gte",
-                        "interval_before": interval_before,
-                        "interval_after": interval_after,
-                    }
-                )
+                record = {
+                    "adaptive_id": adaptive_id,
+                    "frozen_g_level": meta["frozen_g_level"],
+                    "num_teacher_steps": num_steps,
+                    "rho_used": rho_used,
+                    "guidance_steps_count": g_count,
+                    "avg_acc_rollouts": float(avg_reward),
+                    "rollout_accs": [float(x) for x in rollout_accs],
+                    "rollout_reward_sums": rollout_rewards,
+                    "state_before": pre_snapshot,
+                    "state_after": post_snapshot,
+                }
+                if is_mfc:
+                    record["method"] = "mfc"
+                    record["mode"] = pre_snapshot["mode"]
+                    record["epsilon"] = float(self.mfc_state.epsilon)
+                    record["success"] = avg_reward >= float(self.mfc_state.epsilon)
+                    record["safety_triggered"] = safety_triggered
+                else:
+                    last_forced_zero = pre_snapshot.get("last_forced_zero", False)
+                    record["method"] = "adaptive"
+                    record["last_forced_zero"] = last_forced_zero
+                    record["tau"] = float(self.adaptive_state.tau)
+                    record["avg_reward_vs_tau"] = (
+                        "below" if avg_reward < self.adaptive_state.tau else "gte"
+                    )
+                trace_records.append(record)
 
         if trace_enabled and trace_records:
             self._append_adaptive_trace_jsonl(
@@ -541,7 +627,12 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         num_originals_in_batch: int,
         records: list[dict],
     ) -> None:
-        """Append one JSON line per training step for adaptive dry-runs."""
+        """
+        Append one JSON line per training step describing the per-sample
+        curriculum update (AdaBack or MFC).  File name is fixed as
+        ``adaptive_train_trace.jsonl`` for cross-method comparability; the
+        ``curriculum_method`` field inside each line disambiguates.
+        """
         max_steps = int(self.config.trainer.get("adaptive_trace_max_steps", 0))
         if max_steps > 0 and global_step > max_steps:
             return
@@ -552,26 +643,72 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
 
         rhos = [r["rho_used"] for r in records]
         accs = [r["avg_acc_rollouts"] for r in records]
-        visits = [r["interval_after"]["visits"] for r in records]
         g_counts = [r["guidance_steps_count"] for r in records]
-        n_gte = sum(1 for r in records if r["avg_reward_vs_tau"] == "gte")
-        n_below = len(records) - n_gte
-        n_forced_zero = sum(1 for r in records if r["last_forced_zero"])
 
-        summary = {
-            "n_adaptive": len(records),
-            "n_frozen_skipped": num_originals_in_batch - len(records),
-            "n_gte_tau": n_gte,
-            "n_below_tau": n_below,
-            "n_forced_zero": n_forced_zero,
-            "mean_rho": round(sum(rhos) / len(rhos), 4) if rhos else 0,
-            "min_rho": round(min(rhos), 4) if rhos else 0,
-            "max_rho": round(max(rhos), 4) if rhos else 0,
-            "mean_acc": round(sum(accs) / len(accs), 4) if accs else 0,
-            "mean_guidance_steps": round(sum(g_counts) / len(g_counts), 2) if g_counts else 0,
-            "mean_visits": round(sum(visits) / len(visits), 2) if visits else 0,
-            "max_visits": max(visits) if visits else 0,
-        }
+        if self.mfc_state is not None:
+            rho_stars = [r["state_after"]["rho_star"] for r in records]
+            visits = [r["state_after"]["visits"] for r in records]
+            n_success = sum(1 for r in records if r.get("success", False))
+            n_probe = sum(1 for r in records if r.get("mode") == "probe")
+            n_exploit = len(records) - n_probe
+            n_safety = sum(1 for r in records if r.get("safety_triggered", False))
+            frac_at_zero = (
+                sum(1 for rs in rho_stars if rs < 1e-9) / len(rho_stars)
+                if rho_stars
+                else 0.0
+            )
+            summary = {
+                "n_adaptive": len(records),
+                "n_frozen_skipped": num_originals_in_batch - len(records),
+                "n_exploit": n_exploit,
+                "n_probe": n_probe,
+                "n_success": n_success,
+                "n_failure": len(records) - n_success,
+                "n_safety_triggered": n_safety,
+                "mean_rho_used": round(sum(rhos) / len(rhos), 4) if rhos else 0.0,
+                "mean_rho_star_after": round(
+                    sum(rho_stars) / len(rho_stars), 4
+                )
+                if rho_stars
+                else 0.0,
+                "min_rho_star_after": round(min(rho_stars), 4) if rho_stars else 0.0,
+                "max_rho_star_after": round(max(rho_stars), 4) if rho_stars else 0.0,
+                "frac_at_zero_after": round(frac_at_zero, 4),
+                "mean_acc": round(sum(accs) / len(accs), 4) if accs else 0.0,
+                "mean_guidance_steps": round(sum(g_counts) / len(g_counts), 2)
+                if g_counts
+                else 0.0,
+                "mean_visits": round(sum(visits) / len(visits), 2)
+                if visits
+                else 0.0,
+                "max_visits": max(visits) if visits else 0,
+                "epsilon": float(self.mfc_state.epsilon),
+            }
+        else:
+            visits = [r["state_after"]["visits"] for r in records]
+            n_gte = sum(
+                1 for r in records if r.get("avg_reward_vs_tau") == "gte"
+            )
+            n_below = len(records) - n_gte
+            n_forced_zero = sum(1 for r in records if r.get("last_forced_zero"))
+            summary = {
+                "n_adaptive": len(records),
+                "n_frozen_skipped": num_originals_in_batch - len(records),
+                "n_gte_tau": n_gte,
+                "n_below_tau": n_below,
+                "n_forced_zero": n_forced_zero,
+                "mean_rho": round(sum(rhos) / len(rhos), 4) if rhos else 0.0,
+                "min_rho": round(min(rhos), 4) if rhos else 0.0,
+                "max_rho": round(max(rhos), 4) if rhos else 0.0,
+                "mean_acc": round(sum(accs) / len(accs), 4) if accs else 0.0,
+                "mean_guidance_steps": round(sum(g_counts) / len(g_counts), 2)
+                if g_counts
+                else 0.0,
+                "mean_visits": round(sum(visits) / len(visits), 2)
+                if visits
+                else 0.0,
+                "max_visits": max(visits) if visits else 0,
+            }
 
         payload = {
             "global_step": global_step,
@@ -589,7 +726,8 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         with open(path, "a", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False) + "\n")
         logger.info(
-            "Adaptive trace appended (%s samples) -> %s",
+            "%s trace appended (%s samples) -> %s",
+            self.curriculum_method.upper(),
             len(records),
             path,
         )
@@ -609,25 +747,40 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         return str(raw_prompt)
 
     # ------------------------------------------------------------------
-    # Checkpoint — save/restore adaptive state
+    # Checkpoint — save / restore per-sample curriculum state
     # ------------------------------------------------------------------
+
+    def _curriculum_state_filename(self) -> Optional[str]:
+        """Return the per-method JSON filename, or ``None`` if no state."""
+        if self.adaptive_state is not None:
+            return "adaptive_curriculum_state.json"
+        if self.mfc_state is not None:
+            return "mfc_curriculum_state.json"
+        return None
 
     def _save_checkpoint(self):
         super()._save_checkpoint()
-        if self.adaptive_state is not None:
-            adaptive_path = os.path.join(
-                self.config.trainer.default_local_dir,
-                f"global_step_{self.global_steps}",
-                "adaptive_curriculum_state.json",
-            )
-            os.makedirs(os.path.dirname(adaptive_path), exist_ok=True)
-            with open(adaptive_path, "w", encoding="utf-8") as f:
-                json.dump(self.adaptive_state.state_dict(), f, indent=2)
-            logger.info(f"Adaptive curriculum state saved to {adaptive_path}")
+        state = self.curriculum_state
+        filename = self._curriculum_state_filename()
+        if state is None or filename is None:
+            return
+        path = os.path.join(
+            self.config.trainer.default_local_dir,
+            f"global_step_{self.global_steps}",
+            filename,
+        )
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(state.state_dict(), f, indent=2)
+        logger.info(
+            f"{self.curriculum_method.upper()} curriculum state saved to {path}"
+        )
 
     def _load_checkpoint(self):
         super()._load_checkpoint()
-        if self.adaptive_state is None:
+        state = self.curriculum_state
+        filename = self._curriculum_state_filename()
+        if state is None or filename is None:
             return
         if self.config.trainer.resume_mode == "disable":
             return
@@ -642,14 +795,14 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         if global_step_folder is None:
             return
 
-        adaptive_path = os.path.join(
-            global_step_folder, "adaptive_curriculum_state.json"
-        )
-        if os.path.exists(adaptive_path):
-            with open(adaptive_path, "r", encoding="utf-8") as f:
-                state = json.load(f)
-            self.adaptive_state.load_state_dict(state)
-            logger.info(f"Adaptive curriculum state loaded from {adaptive_path}")
+        path = os.path.join(global_step_folder, filename)
+        if os.path.exists(path):
+            with open(path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            state.load_state_dict(payload)
+            logger.info(
+                f"{self.curriculum_method.upper()} curriculum state loaded from {path}"
+            )
 
     # ------------------------------------------------------------------
     # Reward
