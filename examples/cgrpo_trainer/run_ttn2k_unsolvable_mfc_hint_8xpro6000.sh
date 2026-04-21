@@ -48,9 +48,9 @@ python3 -m verl.trainer.main_cgrpo \
     data.guidance_mode=hint \
     data.curriculum_method=mfc \
     \
-    mfc_curriculum.p_probe=0.25 \
+    mfc_curriculum.p_probe=0.3 \
     mfc_curriculum.safety_K=3 \
-    mfc_curriculum.delta_safe=0.1 \
+    mfc_curriculum.delta_safe=0.2 \
     mfc_curriculum.default_rho_star=1.0 \
     \
     actor_rollout_ref.rollout.prompt_length=2500 \
