@@ -236,8 +236,17 @@ class PerSampleCurriculumState:
         visits = [s["visits"] for s in self.states.values()]
 
         n = len(rhos)
+        # Note: ``frac_at_zero`` below is defined on ``s["rho"]`` — the
+        # *last sampled* rho per visit.  That signal is polluted by
+        # (a) p_zero-forced zeros and (b) Uniform-from-interval draws that
+        # happen to land below 0.05 while ``rho_max`` is still far above 0.
+        # The unbiased convergence indicator is ``frac_rho_max_below_0_05``
+        # (below), which reflects the state of the per-sample interval
+        # rather than any single realisation.
         at_zero = sum(1 for r in rhos if r < 0.05) / n
         at_full = sum(1 for r in rhos if r > 0.95) / n
+        frac_rho_max_below_0_05 = sum(1 for rm in rho_maxs if rm < 0.05) / n
+        frac_rho_max_below_0_1 = sum(1 for rm in rho_maxs if rm < 0.1) / n
 
         return {
             "adaptive/mean_rho": sum(rhos) / n,
@@ -245,6 +254,8 @@ class PerSampleCurriculumState:
             "adaptive/mean_rho_max": sum(rho_maxs) / n,
             "adaptive/frac_at_zero": at_zero,
             "adaptive/frac_at_full": at_full,
+            "adaptive/frac_rho_max_below_0_05": frac_rho_max_below_0_05,
+            "adaptive/frac_rho_max_below_0_1": frac_rho_max_below_0_1,
             "adaptive/mean_visits": sum(visits) / n,
             "adaptive/num_tracked": n,
         }
@@ -272,17 +283,38 @@ class MonotoneFrontierCurriculumState:
       advances the frontier; probe failures (``rho < rho_star``) do not
       regress it.  Exploit-mode failures at ``rho == rho_star`` are
       counted; after ``safety_K`` consecutive such failures, the
-      frontier is bumped up by ``delta_safe`` and the counter resets.
+      frontier is bumped up (continuously by ``delta_safe``, then snapped
+      to the discrete lattice with a guaranteed ``+1`` step advance) and
+      the counter resets.
 
     * **Frontier-biased visit sampling** — each visit uses a single
       ``rho_used`` for all ``n`` rollouts (GRPO intra-group identity
       preserved).  With probability ``1 - p_probe`` the visit is in
-      "exploit" mode (``rho_used = rho_star``); otherwise "probe" mode
-      (``rho_used ~ Uniform(0, rho_star)``).
+      "exploit" mode (``rho_used = rho_star``); otherwise "probe" mode,
+      which samples in the *discrete step space*:
+      ``g_curr = round(rho_star * num_steps)`` (clipped to
+      ``[0, num_steps - 1]``); ``g_probe ~ Uniform{0, ..., g_curr - 1}``;
+      ``rho_used = g_probe / num_steps``.  This guarantees every probe
+      advances by at least one teacher-step relative to the current
+      exploit hint, and makes ``rho_star = 0`` reachable in finite time
+      (rather than only asymptotically as under continuous probing).
 
     Success threshold is the derived quantity ``epsilon = 1 / n_rollouts``
     — a visit is "successful" iff at least one of its ``n`` rollouts is
     correct.
+
+    Invariants maintained by this class:
+
+    * ``rho_star_i`` is always a discrete lattice point ``g / num_steps_i``
+      after any probe success or safety-valve event.  (The initial value
+      ``default_rho_star = 1.0`` is equivalent to the top lattice point
+      ``(num_steps_i - 1) / num_steps_i`` modulo
+      :meth:`compute_guidance_steps` clipping; it is snapped on first
+      :meth:`get_rho` as a defensive no-op.)
+    * After a safety-valve event, ``g_star`` strictly increases by at
+      least ``1`` (so the valve always makes progress — avoiding the
+      silent "bump by 0.01 but round() still returns the same ``g``"
+      failure mode).
 
     Samples with ``frozen_g_level`` (anchors) are never registered in
     ``self.states`` and therefore never updated — the caller is
@@ -312,17 +344,55 @@ class MonotoneFrontierCurriculumState:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _init_entry(self) -> dict:
+    # Small additive bias used whenever we convert ``rho * n`` to an integer
+    # step count.  It pushes values on or just below the banker's-rounding
+    # half-step (e.g. 0.4999999... produced by 1/3 * 3 type FP chatter) up to
+    # the "expected" integer, avoiding off-by-one oscillation in the discrete
+    # lattice invariants.
+    _FP_ROUND_EPS = 1e-9
+
+    @classmethod
+    def _g_from_rho(cls, rho: float, num_steps: int) -> int:
+        """
+        Map a continuous ``rho`` to the discrete step count actually used by
+        :meth:`compute_guidance_steps`.  Returns an integer in
+        ``[0, max(0, num_steps - 1)]``.  ``num_steps <= 0`` degenerates to 0.
+        """
+        if num_steps <= 0:
+            return 0
+        g = int(math.floor(rho * num_steps + 0.5 + cls._FP_ROUND_EPS))
+        if g < 0:
+            g = 0
+        if g > num_steps - 1:
+            g = num_steps - 1
+        return g
+
+    @classmethod
+    def _snap_to_lattice(cls, rho: float, num_steps: int) -> float:
+        """
+        Project ``rho`` onto the per-sample discrete lattice
+        ``{g / num_steps : g ∈ [0, num_steps - 1]}``.  Idempotent.
+        ``num_steps <= 0`` degenerates to ``0.0``.
+        """
+        if num_steps <= 0:
+            return 0.0
+        return cls._g_from_rho(rho, num_steps) / num_steps
+
+    def _init_entry(self, num_steps: int) -> dict:
+        # Snap the default frontier to the top lattice point for this sample
+        # so that ``rho_star`` is on-lattice from the first visit onward.
+        rho_star0 = self._snap_to_lattice(self.default_rho_star, num_steps)
         return {
-            "rho_star": self.default_rho_star,
-            "rho": self.default_rho_star,
+            "rho_star": rho_star0,
+            "rho": rho_star0,
             "mode": "exploit",
             "safety_counter": 0,
             "safety_triggered_total": 0,
             "visits": 0,
+            "num_steps": int(max(0, num_steps)),
             # Most-recent update bookkeeping (set by :meth:`update`).
-            "rho_star_before": self.default_rho_star,
-            "rho_star_after": self.default_rho_star,
+            "rho_star_before": rho_star0,
+            "rho_star_after": rho_star0,
             "last_success": False,
         }
 
@@ -333,31 +403,43 @@ class MonotoneFrontierCurriculumState:
     def get_rho(self, sample_id: str, num_steps: int) -> float:
         """
         Sample a supervision ratio for *sample_id* following the MFC
-        exploit / probe policy.  ``num_steps`` is accepted for API parity
-        with :class:`PerSampleCurriculumState` but is not used by MFC —
-        the frontier is maintained in continuous ρ space and step
-        discretisation happens at :meth:`compute_guidance_steps`.
+        exploit / probe policy.
+
+        The probe branch works in the *discrete step space* so each probe
+        strictly advances the hint by at least one teacher-step relative to
+        the current exploit level.  ``rho_star`` is kept on the per-sample
+        lattice as a side-effect.
         """
         if sample_id not in self.states:
-            self.states[sample_id] = self._init_entry()
+            self.states[sample_id] = self._init_entry(num_steps)
 
         s = self.states[sample_id]
-        rho_star = s["rho_star"]
+        s["num_steps"] = int(max(0, num_steps))
 
-        if rho_star <= 0.0:
-            # Already converged — always exploit at rho = 0.
+        # Defensive: snap rho_star to the lattice every visit (idempotent
+        # after the first hit, cheap, and guarantees the invariant even if
+        # state was loaded from an old checkpoint that predates this class).
+        s["rho_star"] = self._snap_to_lattice(s["rho_star"], num_steps)
+        rho_star = s["rho_star"]
+        g_curr = self._g_from_rho(rho_star, num_steps)
+
+        # Already at (or effectively at) the discrete floor — no room to
+        # probe lower.  All visits collapse to the exploit branch at the
+        # current on-lattice value (which may be exactly 0).
+        if g_curr <= 0 or num_steps <= 0:
             s["mode"] = "exploit"
-            s["rho"] = 0.0
-            return 0.0
+            s["rho"] = rho_star
+            return rho_star
 
         if random.random() < self.p_probe:
+            # Discrete probe: strictly below g_curr, uniform over step space.
+            g_probe = random.randint(0, g_curr - 1)
             s["mode"] = "probe"
-            s["rho"] = random.uniform(0.0, rho_star)
+            s["rho"] = g_probe / num_steps
         else:
             s["mode"] = "exploit"
             s["rho"] = rho_star
 
-        s["rho"] = max(0.0, min(1.0, s["rho"]))
         return s["rho"]
 
     def update(self, sample_id: str, avg_reward: float, num_steps: int) -> None:
@@ -371,6 +453,7 @@ class MonotoneFrontierCurriculumState:
             return
 
         s = self.states[sample_id]
+        s["num_steps"] = int(max(0, num_steps))
         rho_used = s["rho"]
         mode = s["mode"]
         rho_star_before = s["rho_star"]
@@ -382,6 +465,8 @@ class MonotoneFrontierCurriculumState:
 
         if success:
             # Case A — frontier advances (monotone non-increasing).
+            # Probe ``rho_used`` is already on the per-sample lattice; exploit
+            # ``rho_used == rho_star`` which is also on-lattice by invariant.
             if rho_used <= s["rho_star"]:
                 s["rho_star"] = rho_used
             s["safety_counter"] = 0
@@ -390,7 +475,9 @@ class MonotoneFrontierCurriculumState:
                 # Case B — failure at the current frontier in exploit mode.
                 s["safety_counter"] += 1
                 if s["safety_counter"] >= self.safety_K:
-                    s["rho_star"] = min(1.0, s["rho_star"] + self.delta_safe)
+                    s["rho_star"] = self._bump_safety_on_lattice(
+                        s["rho_star"], num_steps
+                    )
                     s["safety_counter"] = 0
                     s["safety_triggered_total"] += 1
             else:
@@ -398,6 +485,23 @@ class MonotoneFrontierCurriculumState:
                 pass
 
         s["rho_star_after"] = s["rho_star"]
+
+    def _bump_safety_on_lattice(self, rho_star: float, num_steps: int) -> float:
+        """
+        Apply the safety-valve regression: continuous bump by
+        ``delta_safe``, snapped to the discrete lattice, with a guaranteed
+        ``+1`` step advance so a small ``delta_safe`` never silently no-ops.
+        The result is clamped to the top lattice point ``(num_steps - 1) / num_steps``.
+        """
+        if num_steps <= 0:
+            return 0.0
+        g_curr = self._g_from_rho(rho_star, num_steps)
+        g_cont_bumped = self._g_from_rho(
+            min(1.0, rho_star + self.delta_safe), num_steps
+        )
+        g_new = max(g_curr + 1, g_cont_bumped)
+        g_new = min(num_steps - 1, g_new)
+        return g_new / num_steps
 
     # ------------------------------------------------------------------
     # Step discretisation (shared semantics with AdaBack)
@@ -446,7 +550,20 @@ class MonotoneFrontierCurriculumState:
     # ------------------------------------------------------------------
 
     def get_metrics(self) -> dict:
-        """Aggregate metrics for wandb / logging."""
+        """
+        Aggregate metrics for wandb / logging.
+
+        Two complementary "frac at zero"-style metrics are exported:
+
+        * ``mfc/frac_at_zero`` — fraction with the continuous frontier
+          ``rho_star < 0.05``.  Directly comparable to AdaBack's
+          ``adaptive/frac_rho_max_below_0_05``.
+        * ``mfc/frac_effective_zero`` — fraction whose discrete hint
+          ``round(rho_star * num_steps)`` is 0 (i.e. the model trains on a
+          *functionally* zero-guidance prompt).  This is the most faithful
+          operationalisation of the paper's "entered no-shift training"
+          surrogate objective.
+        """
         if not self.states:
             return {}
 
@@ -456,27 +573,47 @@ class MonotoneFrontierCurriculumState:
         safety_triggers = [s["safety_triggered_total"] for s in self.states.values()]
         safety_counters = [s["safety_counter"] for s in self.states.values()]
         modes = [s["mode"] for s in self.states.values()]
+        num_steps_list = [s.get("num_steps", 0) for s in self.states.values()]
 
         n = len(rho_stars)
 
-        def _frac(pred) -> float:
-            return sum(1 for v in rho_stars if pred(v)) / n
-
         rho_stars_sorted = sorted(rho_stars)
         median = rho_stars_sorted[n // 2] if n > 0 else 0.0
+
+        # Discrete-aware effective zero.
+        g_stars = [
+            self._g_from_rho(r, ns)
+            for r, ns in zip(rho_stars, num_steps_list)
+        ]
+        frac_effective_zero = sum(1 for g in g_stars if g == 0) / n
+        frac_effective_below_2 = sum(1 for g in g_stars if g < 2) / n
+
+        # Continuous-threshold convergence (apples-to-apples with AdaBack).
+        frac_rho_star_below_0_05 = sum(1 for v in rho_stars if v < 0.05) / n
+        frac_rho_star_below_0_1 = sum(1 for v in rho_stars if v < 0.1) / n
+        frac_rho_star_at_zero_exact = sum(1 for v in rho_stars if v <= 0.0) / n
+        frac_at_one = sum(1 for v in rho_stars if v > 0.999) / n
 
         return {
             "mfc/mean_rho_star": sum(rho_stars) / n,
             "mfc/median_rho_star": median,
             "mfc/min_rho_star": min(rho_stars) if rho_stars else 0.0,
             "mfc/max_rho_star": max(rho_stars) if rho_stars else 0.0,
-            "mfc/frac_at_zero": _frac(lambda v: v < 1e-9),
-            "mfc/frac_below_0_1": _frac(lambda v: v < 0.1),
-            "mfc/frac_at_one": _frac(lambda v: v > 0.999),
+            # Faithful convergence indicators
+            "mfc/frac_effective_zero": frac_effective_zero,
+            "mfc/frac_effective_below_2_steps": frac_effective_below_2,
+            "mfc/frac_at_zero": frac_rho_star_below_0_05,
+            "mfc/frac_rho_star_below_0_05": frac_rho_star_below_0_05,
+            "mfc/frac_rho_star_below_0_1": frac_rho_star_below_0_1,
+            "mfc/frac_rho_star_at_zero_exact": frac_rho_star_at_zero_exact,
+            "mfc/frac_at_one": frac_at_one,
+            # Visit statistics
             "mfc/mean_rho_used": sum(rhos_used) / n,
             "mfc/probe_fraction": sum(1 for m in modes if m == "probe") / n,
+            "mfc/mean_g_star": sum(g_stars) / n if g_stars else 0.0,
             "mfc/mean_visits": sum(visits) / n,
             "mfc/num_tracked": n,
+            # Safety-valve statistics
             "mfc/safety_trigger_total": sum(safety_triggers),
             "mfc/mean_safety_counter": sum(safety_counters) / n,
             "mfc/epsilon": self.epsilon,
