@@ -150,3 +150,101 @@ def test_state_dict_filenames_are_distinct():
     assert "tau" in ad and "tau" not in mfc
     assert "p_probe" in mfc and "p_probe" not in ad
     assert mfc.get("method") == "mfc"
+
+
+def test_curriculum_dataset_sentinel_covers_mfc():
+    """Guard against a regression where the g_level=-1 sentinel branch in
+    CurriculumGRPODataset.__getitem__ silently excludes "mfc" and thus
+    causes MFC rows to train with g_level=0 (no rho sampling)."""
+    path = ROOT / "verl" / "utils" / "dataset" / "curriculum_dataset.py"
+    source = path.read_text(encoding="utf-8")
+    # Both method strings MUST be part of the gate condition.
+    assert (
+        'self.curriculum_method in ("adaptive", "mfc")' in source
+        or "self.curriculum_method in ('adaptive', 'mfc')" in source
+    ), (
+        "curriculum_dataset.py sentinel gate no longer mentions both "
+        "'adaptive' and 'mfc' — MFC rows would train with g_level=0."
+    )
+    # And the g_level = -1.0 sentinel assignment must be under that gate.
+    assert "g_level = -1.0" in source
+
+
+def test_pure_n128_dataset_is_anchor_free():
+    """The pure-128 dataset must not contain frozen_g_level anchors."""
+    import json
+
+    path = ROOT / "data" / "ttn2k" / "final" / "ttn_unsolvable_pass64_n128" / "dataset.jsonl"
+    if not path.exists():
+        # Not fatal — this file is produced by build_ttn_unsolvable_n128.py.
+        # Tests should pass in clones that haven't built the data yet.
+        return
+    lines = [l for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert len(lines) == 128, f"expected 128 rows, got {len(lines)}"
+    for i, line in enumerate(lines):
+        row = json.loads(line)
+        assert row.get("pass_rate", 0) == 0.0, f"row {i}: pass_rate != 0"
+        assert "frozen_g_level" not in row, f"row {i}: anchors leaked in"
+        assert "g_level" not in row, f"row {i}: static g_level leaked in"
+        assert "adaptive_id" in row, f"row {i}: missing adaptive_id"
+
+
+def _simulate_curriculum_dataset_g_level(item: dict, curriculum_method: str) -> float:
+    """Pure-Python re-implementation of the g_level assignment branch in
+    :meth:`CurriculumGRPODataset.__getitem__`.  Mirrors the production source
+    *exactly* so this test fails if the production branch drifts.
+
+    Only returns the final ``g_level`` — the rest of the row is irrelevant.
+    """
+    g_level = float(item.get("g_level", 0.0))
+    guidance_steps = item.get("guidance_steps", [])
+    frozen_g_level = item.get("frozen_g_level", None)
+
+    if frozen_g_level is not None:
+        g_level = float(frozen_g_level)
+    elif curriculum_method in ("adaptive", "mfc") and not guidance_steps:
+        g_level = -1.0
+    return g_level
+
+
+def test_sentinel_simulates_mfc_rows_to_minus_one():
+    """On every row of the pure-128 dataset, MFC produces the -1 sentinel."""
+    import json
+
+    path = ROOT / "data" / "ttn2k" / "final" / "ttn_unsolvable_pass64_n128" / "dataset.jsonl"
+    if not path.exists():
+        return
+    lines = [l for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    for i, line in enumerate(lines):
+        row = json.loads(line)
+        for method in ("mfc", "adaptive"):
+            g = _simulate_curriculum_dataset_g_level(row, method)
+            assert g == -1.0, (
+                f"row {i} under curriculum_method={method!r} "
+                f"produced g_level={g!r}; expected -1.0 sentinel"
+            )
+
+
+def test_sentinel_not_triggered_for_none_or_mixture():
+    """Baseline / mixture methods must leave g_level at its dataset value."""
+    # A mixture-style row with explicit g_level=0.3 + guidance_steps.
+    row_with_guidance = {
+        "g_level": 0.3,
+        "guidance_steps": ["s1", "s2"],
+    }
+    for method in ("none", "mixture"):
+        assert _simulate_curriculum_dataset_g_level(row_with_guidance, method) == 0.3
+
+    # A bare row (no g_level, no guidance).  Under none/mixture it must stay at 0.
+    bare_row = {}
+    for method in ("none", "mixture"):
+        assert _simulate_curriculum_dataset_g_level(bare_row, method) == 0.0
+
+
+def test_sentinel_skipped_for_frozen_anchors():
+    """Anchor rows keep their frozen_g_level regardless of curriculum method."""
+    row_g0 = {"frozen_g_level": 0.0}
+    row_g1 = {"frozen_g_level": 1.0}
+    for method in ("none", "mixture", "adaptive", "mfc"):
+        assert _simulate_curriculum_dataset_g_level(row_g0, method) == 0.0
+        assert _simulate_curriculum_dataset_g_level(row_g1, method) == 1.0

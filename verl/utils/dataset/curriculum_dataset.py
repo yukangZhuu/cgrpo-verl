@@ -151,9 +151,13 @@ class CurriculumGRPODataset(Dataset):
             guidance_steps = PerSampleCurriculumState.compute_guidance_steps(
                 steps, g_level
             )
-        elif self.curriculum_method == "adaptive" and not guidance_steps:
-            # Adaptive non-frozen sample: trainer will fill guidance dynamically.
-            # Use -1 as sentinel so the trainer knows to compute it.
+        elif (
+            self.curriculum_method in ("adaptive", "mfc")
+            and not guidance_steps
+        ):
+            # Per-sample curriculum (AdaBack or MFC) non-frozen sample: the
+            # trainer will fill guidance dynamically via _apply_adaptive_guidance.
+            # Use -1 as a sentinel so that hook knows to override.
             g_level = -1.0
 
         gt_answer = str(ground_truth).strip()

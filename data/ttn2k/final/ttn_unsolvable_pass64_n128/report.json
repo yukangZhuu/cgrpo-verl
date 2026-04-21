@@ -1,0 +1,54 @@
+{
+  "generated_at_utc": "2026-04-21T07:05:58.085223+00:00",
+  "script": "scripts/teacher_traces/build_ttn_unsolvable_n128.py",
+  "source_file": "data/ttn2k/final/ttn_unsolvable_pass64.jsonl",
+  "output_file": "data/ttn2k/final/ttn_unsolvable_pass64_n128/dataset.jsonl",
+  "selection_strategy": "sort by (question_chars + steps_chars, index) asc; take shortest N",
+  "target_count": 128,
+  "counts": {
+    "raw_source_rows": 136,
+    "kept": 128,
+    "dropped": 8
+  },
+  "length_summary_kept": {
+    "min": 668,
+    "max": 2941,
+    "median": 2037
+  },
+  "length_summary_dropped": [
+    {
+      "dataset_index": 8104,
+      "question_plus_steps_chars": 2960
+    },
+    {
+      "dataset_index": 18937,
+      "question_plus_steps_chars": 2966
+    },
+    {
+      "dataset_index": 6423,
+      "question_plus_steps_chars": 2969
+    },
+    {
+      "dataset_index": 1069,
+      "question_plus_steps_chars": 2978
+    },
+    {
+      "dataset_index": 2231,
+      "question_plus_steps_chars": 2978
+    },
+    {
+      "dataset_index": 11196,
+      "question_plus_steps_chars": 3042
+    },
+    {
+      "dataset_index": 13473,
+      "question_plus_steps_chars": 3141
+    },
+    {
+      "dataset_index": 7297,
+      "question_plus_steps_chars": 3257
+    }
+  ],
+  "has_anchors": false,
+  "notes": "Pure unsolvable pool: every row has pass_rate=0 under the scorer model. No frozen_g_level anchors. adaptive_id = str(index)."
+}

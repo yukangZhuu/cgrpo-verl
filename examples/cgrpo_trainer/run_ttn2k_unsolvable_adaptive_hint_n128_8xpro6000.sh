@@ -1,10 +1,13 @@
 #!/bin/bash
-# Monotone Frontier Curriculum (MFC) on the pure-128 unsolvable pool.
+# Per-sample adaptive curriculum (AdaBack) on the PURE-128 unsolvable pool.
 # Dataset: ttn_unsolvable_pass64_n128/dataset.jsonl (no anchors).
-# guidance_mode=hint, curriculum_method=mfc
+# This launcher is a 1:1 re-run of the original AdaBack training, but on the
+# anchor-free dataset so that it is directly comparable to MFC
+# (run_ttn2k_unsolvable_mfc_hint_8xpro6000.sh). All training knobs are held
+# identical to the anchor-version launcher.
+#
+# guidance_mode=hint, curriculum_method=adaptive
 # Hardware: 8x RTX PRO 6000 (96GB)
-# Matched 1:1 with run_ttn2k_unsolvable_adaptive_hint_n128_8xpro6000.sh for
-# a clean AdaBack vs. MFC comparison on the same data.
 set -x
 
 export RAY_TMPDIR=/root/autodl-tmp/ray_tmp
@@ -17,12 +20,12 @@ ulimit -n 65536     2>/dev/null || true
 export OMP_NUM_THREADS=4
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
-# Let wandb start a fresh run; comment these two lines back in (and set a
-# concrete run id) if you want to resume an interrupted MFC run.
+# Fresh wandb run — intentionally distinct from the anchor-version AdaBack
+# run (etzbveve) so the two results can be compared side by side.
 unset WANDB_RUN_ID 2>/dev/null || true
 unset WANDB_RESUME 2>/dev/null || true
 
-export VERL_FILE_LOGGER_PATH=logs/ttn2k_unsolvable_mfc_hint_8xpro6000_metrics.jsonl
+export VERL_FILE_LOGGER_PATH=logs/ttn2k_unsolvable_adaptive_hint_n128_8xpro6000_metrics.jsonl
 mkdir -p logs
 
 TRAIN_DATA="${TRAIN_DATA:-/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64_n128/dataset.jsonl}"
@@ -46,12 +49,12 @@ python3 -m verl.trainer.main_cgrpo \
     data.max_prompt_length=2500 \
     data.max_response_length=8192 \
     data.guidance_mode=hint \
-    data.curriculum_method=mfc \
+    data.curriculum_method=adaptive \
     \
-    mfc_curriculum.p_probe=0.25 \
-    mfc_curriculum.safety_K=3 \
-    mfc_curriculum.delta_safe=0.1 \
-    mfc_curriculum.default_rho_star=1.0 \
+    adaptive_curriculum.tau=0.4 \
+    adaptive_curriculum.p_zero=0.05 \
+    adaptive_curriculum.default_rho=0.5 \
+    adaptive_curriculum.min_step_delta=1 \
     \
     actor_rollout_ref.rollout.prompt_length=2500 \
     actor_rollout_ref.rollout.response_length=8192 \
@@ -101,8 +104,8 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb","file"]' \
     trainer.project_name='ttn2k' \
-    trainer.experiment_name='ttn2k_unsolvable_mfc_hint_8xpro6000' \
-    trainer.default_local_dir=checkpoints/ttn2k_unsolvable_mfc_hint \
+    trainer.experiment_name='ttn2k_unsolvable_adaptive_hint_n128_8xpro6000' \
+    trainer.default_local_dir=checkpoints/ttn2k_unsolvable_adaptive_hint_n128 \
     trainer.n_gpus_per_node=8 \
     trainer.nnodes=1 \
     trainer.save_freq=100 \
@@ -110,6 +113,6 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.total_epochs=2000 \
     trainer.val_before_train=True \
     trainer.debug_dump_freq=20 \
-    trainer.debug_dump_dir=debug_samples/ttn2k_unsolvable_mfc_hint \
+    trainer.debug_dump_dir=debug_samples/ttn2k_unsolvable_adaptive_hint_n128 \
     trainer.debug_dump_num_samples=5 \
     $@

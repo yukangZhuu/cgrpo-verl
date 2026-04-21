@@ -18,7 +18,7 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 mkdir -p logs
 
-TRAIN_DATA="${TRAIN_DATA:-/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64_max2600_n100/dataset_adaptive.jsonl}"
+TRAIN_DATA="${TRAIN_DATA:-/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64_n128/dataset.jsonl}"
 VAL_DATA="${VAL_DATA:-/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/test_200.jsonl}"
 
 if [ ! -f "$TRAIN_DATA" ]; then
