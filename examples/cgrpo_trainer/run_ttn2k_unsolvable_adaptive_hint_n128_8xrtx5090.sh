@@ -1,16 +1,33 @@
 #!/bin/bash
 # Per-sample adaptive curriculum (AdaBack) on the PURE-128 unsolvable pool.
 # Dataset: ttn_unsolvable_pass64_n128/dataset.jsonl (no anchors).
-# This launcher is a 1:1 re-run of the original AdaBack training, but on the
-# anchor-free dataset so that it is directly comparable to MFC
-# (run_ttn2k_unsolvable_mfc_hint_8xpro6000.sh). All training knobs are held
-# identical to the anchor-version launcher.
+# Direct port of run_ttn2k_unsolvable_adaptive_hint_n128_8xpro6000.sh to
+# 8 x RTX 5090 (32 GB).  All *algorithm* hyperparameters are identical to the
+# PRO6000 launcher so the two runs are directly comparable.  The only
+# differences are the VRAM-scaling knobs that must shrink because 5090 has
+# 32 GB / GPU vs PRO6000's 96 GB / GPU (~3x less):
+#
+#   rollout.gpu_memory_utilization      0.70  -> 0.60
+#   actor.ppo_max_token_len_per_gpu     48000 -> 24000
+#   rollout.max_num_batched_tokens      32768 -> 16384
+#   rollout.log_prob_micro_batch_size_per_gpu  16 -> 8
+#   ref.log_prob_micro_batch_size_per_gpu      16 -> 8
+#
+# Everything else (batch=128, rollout.n=8, response_length=8192,
+# lr=1e-6, KL/clip, AdaBack tau/p_zero, etc.) is held fixed.
+#
+# If training still OOMs, the next knobs to try (in order, least invasive
+# first) are:
+#   1) actor.ppo_max_token_len_per_gpu: 24000 -> 16000
+#   2) rollout.gpu_memory_utilization: 0.60 -> 0.55
+#   3) actor.fsdp_config.param_offload=True, optimizer_offload=True (slow)
+#   4) data.max_response_length: 8192 -> 6144 (changes training semantics)
 #
 # guidance_mode=hint, curriculum_method=adaptive
-# Hardware: 8x RTX PRO 6000 (96GB)
+# Hardware: 8x RTX 5090 (32 GB)
 set -x
 
-export RAY_TMPDIR=/root/autodl-tmp/ray_tmp
+export RAY_TMPDIR=${RAY_TMPDIR:-/root/autodl-tmp/ray_tmp}
 mkdir -p "$RAY_TMPDIR"
 
 export VLLM_USE_DEEP_GEMM=0
@@ -20,12 +37,11 @@ ulimit -n 65536     2>/dev/null || true
 export OMP_NUM_THREADS=4
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
-# Fresh wandb run — intentionally distinct from the anchor-version AdaBack
-# run (etzbveve) so the two results can be compared side by side.
+# Fresh wandb run — distinct from the PRO6000 AdaBack runs.
 unset WANDB_RUN_ID 2>/dev/null || true
 unset WANDB_RESUME 2>/dev/null || true
 
-export VERL_FILE_LOGGER_PATH=logs/ttn2k_unsolvable_adaptive_hint_n128_8xpro6000_metrics.jsonl
+export VERL_FILE_LOGGER_PATH=logs/ttn2k_unsolvable_adaptive_hint_n128_8xrtx5090_metrics.jsonl
 mkdir -p logs
 
 TRAIN_DATA="${TRAIN_DATA:-/root/autodl-tmp/cgrpo-verl/data/ttn2k/final/ttn_unsolvable_pass64_n128/dataset.jsonl}"
@@ -67,7 +83,7 @@ python3 -m verl.trainer.main_cgrpo \
     actor_rollout_ref.actor.ppo_mini_batch_size=128 \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=4 \
     actor_rollout_ref.actor.use_dynamic_bsz=True \
-    actor_rollout_ref.actor.ppo_max_token_len_per_gpu=48000 \
+    actor_rollout_ref.actor.ppo_max_token_len_per_gpu=24000 \
     actor_rollout_ref.actor.use_kl_loss=True \
     actor_rollout_ref.actor.kl_loss_coef=0.001 \
     actor_rollout_ref.actor.kl_loss_type=low_var_kl \
@@ -79,19 +95,19 @@ python3 -m verl.trainer.main_cgrpo \
     actor_rollout_ref.actor.fsdp_config.optimizer_offload=False \
     actor_rollout_ref.rollout.enable_prefix_caching=True \
     \
-    actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=16 \
+    actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=8 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
     actor_rollout_ref.rollout.name=vllm \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.70 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.55 \
     actor_rollout_ref.rollout.n=8 \
     actor_rollout_ref.rollout.temperature=1.0 \
     actor_rollout_ref.rollout.top_p=1.0 \
-    actor_rollout_ref.rollout.max_num_batched_tokens=32768 \
+    actor_rollout_ref.rollout.max_num_batched_tokens=16384 \
     actor_rollout_ref.rollout.val_kwargs.temperature=0.6 \
     actor_rollout_ref.rollout.val_kwargs.top_p=0.95 \
     actor_rollout_ref.rollout.val_kwargs.do_sample=True \
     actor_rollout_ref.rollout.val_kwargs.n=1 \
-    actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=16 \
+    actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=8 \
     actor_rollout_ref.ref.fsdp_config.param_offload=False \
     \
     algorithm.use_kl_in_reward=False \
@@ -104,8 +120,8 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.critic_warmup=0 \
     trainer.logger='["console","wandb","file"]' \
     trainer.project_name='ttn2k' \
-    trainer.experiment_name='ttn2k_unsolvable_adaptive_hint_n128_8xpro6000' \
-    trainer.default_local_dir=checkpoints/ttn2k_unsolvable_adaptive_hint_n128 \
+    trainer.experiment_name='ttn2k_unsolvable_adaptive_hint_n128_8xrtx5090' \
+    trainer.default_local_dir=checkpoints/ttn2k_unsolvable_adaptive_hint_n128_5090 \
     trainer.n_gpus_per_node=8 \
     trainer.nnodes=1 \
     trainer.save_freq=100 \
@@ -113,6 +129,6 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.total_epochs=2000 \
     trainer.val_before_train=True \
     trainer.debug_dump_freq=20 \
-    trainer.debug_dump_dir=debug_samples/ttn2k_unsolvable_adaptive_hint_n128 \
+    trainer.debug_dump_dir=debug_samples/ttn2k_unsolvable_adaptive_hint_n128_5090 \
     trainer.debug_dump_num_samples=5 \
     $@
