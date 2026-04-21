@@ -117,11 +117,18 @@ trainer:
   debug_dump_dir: "./debug_samples"
   debug_dump_num_samples: 10
 
-  # Per-step JSONL trace for adaptive curriculum dry-runs (curriculum_method=adaptive)
+  # Per-step JSONL trace for per-sample curriculum dry-runs
+  # (used by curriculum_method in {"adaptive", "mfc"}).  File name is always
+  # ``adaptive_train_trace.jsonl`` for cross-method comparability; the
+  # ``curriculum_method`` field inside each line disambiguates.
   adaptive_trace_enable: false
   adaptive_trace_dir: "./adaptive_trace"
   # Log only the first N training steps (after optional val_before_train); 0 = no limit
   adaptive_trace_max_steps: 0
+  # If true, each JSONL line also includes the full per-sample ``samples`` array
+  # (mode / rho_used / state_before / state_after / rollout_accs / rollout_reward_sums).
+  # If false (default), only the aggregated ``step_summary`` is written.
+  adaptive_trace_verbose: false
 
 # Per-sample adaptive curriculum (only used when curriculum_method=adaptive)
 adaptive_curriculum:
