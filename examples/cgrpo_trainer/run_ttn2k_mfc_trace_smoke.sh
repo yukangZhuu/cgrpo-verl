@@ -41,9 +41,9 @@ python3 -m verl.trainer.main_cgrpo \
     data.guidance_mode=hint \
     data.curriculum_method=mfc \
     \
-    mfc_curriculum.p_probe=0.25 \
+    mfc_curriculum.p_probe=0.3 \
     mfc_curriculum.safety_K=3 \
-    mfc_curriculum.delta_safe=0.1 \
+    mfc_curriculum.delta_safe=0.2 \
     mfc_curriculum.default_rho_star=1.0 \
     \
     actor_rollout_ref.rollout.prompt_length=2500 \
@@ -94,10 +94,10 @@ python3 -m verl.trainer.main_cgrpo \
     trainer.experiment_name='mfc_trace_smoke' \
     trainer.default_local_dir=checkpoints/mfc_trace_smoke \
     \
-    trainer.total_training_steps=10 \
+    trainer.total_training_steps=20 \
     trainer.val_before_train=False \
     trainer.save_freq=999999 \
-    trainer.test_freq=999999 \
+    trainer.test_freq=10 \
     trainer.total_epochs=2000 \
     trainer.logger='["console"]' \
     \
