@@ -73,19 +73,74 @@ def test_v2_load_accepts_unmarked_state_dict():
     assert "x" in v2.states
 
 
-# -- Sampling: Uniform(0, rho_max) ----------------------------------------
+# -- Sampling: discrete Uniform{0, ..., g_curr} ---------------------------
 
 
-def test_v2_sample_within_rho_max_bounds():
+def test_v2_sample_uses_discrete_lattice():
+    """Each visit must draw an integer step count and yield exactly k/n."""
     st = MFCV2()
-    st.get_rho("a", num_steps=10)  # register; rho_max=1.0 initial
-    st.states["a"]["rho_max"] = 0.4
-    # Mock random.uniform to verify it is called with (0, 0.4)
-    with mock.patch.object(_mod.random, "uniform", return_value=0.2) as mu:
+    st.get_rho("a", num_steps=10)  # register
+    st.states["a"]["rho_max"] = 0.4  # g_curr = round(0.4 * 10) = 4
+    with mock.patch.object(_mod.random, "randint", return_value=2) as mr:
         rho = st.get_rho("a", num_steps=10)
-    mu.assert_called_with(0.0, 0.4)
+    mr.assert_called_with(0, 4)
     assert rho == 0.2
     assert st.states["a"]["rho"] == 0.2
+
+
+def test_v2_sampled_rho_is_always_on_lattice():
+    """Every sampled rho is exactly k / num_steps for some k."""
+    import random as r
+
+    r.seed(42)
+    st = MFCV2()
+    n = 16
+    st.get_rho("a", num_steps=n)
+    st.states["a"]["rho_max"] = 0.5  # g_curr = 8
+    for _ in range(500):
+        rho = st.get_rho("a", num_steps=n)
+        k = round(rho * n)
+        assert abs(rho - k / n) < 1e-9, f"non-lattice rho sampled: {rho}"
+        assert 0 <= k <= 8, f"out-of-range step count: {k}"
+
+
+def test_v2_sample_includes_both_endpoints():
+    """g=0 (target) and g=g_curr (frontier) must BOTH be reachable."""
+    st = MFCV2()
+    st.get_rho("a", num_steps=10)
+    st.states["a"]["rho_max"] = 0.5  # g_curr = 5
+    # Force g=0 (the on-target lattice point)
+    with mock.patch.object(_mod.random, "randint", return_value=0):
+        assert st.get_rho("a", num_steps=10) == 0.0
+    # Force g=5 (the frontier itself; included in v2's discrete set)
+    with mock.patch.object(_mod.random, "randint", return_value=5):
+        assert st.get_rho("a", num_steps=10) == 0.5
+
+
+def test_v2_discrete_uniform_is_unbiased():
+    """Empirical histogram over {0, 1, ..., g_curr} must be near-uniform.
+
+    Locks down the structural fix vs. continuous Uniform(0, rho_max),
+    where the endpoints would each get half-width probability mass.
+    """
+    import random as r
+
+    r.seed(7)
+    st = MFCV2()
+    n = 10
+    st.get_rho("a", num_steps=n)
+    st.states["a"]["rho_max"] = 0.5  # g_curr = 5 -> 6 levels
+    counts = [0] * 6
+    N = 6000
+    for _ in range(N):
+        rho = st.get_rho("a", num_steps=n)
+        counts[round(rho * n)] += 1
+    expected = N / 6
+    # ±15% tolerance — well within multinomial fluctuation at N=6000
+    for k, c in enumerate(counts):
+        assert 0.85 * expected < c < 1.15 * expected, (
+            f"non-uniform: counts={counts}, level {k} got {c} (expected {expected:.0f})"
+        )
 
 
 def test_v2_sample_at_zero_when_rho_max_is_zero():
@@ -93,6 +148,23 @@ def test_v2_sample_at_zero_when_rho_max_is_zero():
     st.get_rho("a", num_steps=10)
     st.states["a"]["rho_max"] = 0.0
     rho = st.get_rho("a", num_steps=10)
+    assert rho == 0.0
+
+
+def test_v2_g_curr_zero_collapses_to_deterministic_zero():
+    """When rho_max corresponds to g_curr=0, the sampler must always yield 0."""
+    st = MFCV2()
+    st.get_rho("a", num_steps=10)
+    # rho_max=0.04 → round(0.4)=0 → g_curr=0; randint(0, 0) = 0 always
+    st.states["a"]["rho_max"] = 0.04
+    for _ in range(50):
+        assert st.get_rho("a", num_steps=10) == 0.0
+
+
+def test_v2_degenerate_num_steps_returns_zero():
+    """num_steps == 0 has no lattice; sampler degenerates to 0 deterministically."""
+    st = MFCV2()
+    rho = st.get_rho("a", num_steps=0)
     assert rho == 0.0
 
 
@@ -138,16 +210,17 @@ def test_v2_repeated_failures_do_not_lock_out_low_rho():
     st = MFCV2(tau=0.5)
     st.get_rho("a", num_steps=10)
     st.states["a"]["rho_max"] = 0.5
-    # 5 failures at rho=0.05
+    # 5 failures at the lowest lattice rho (rho=0).
     for _ in range(5):
-        st.states["a"]["rho"] = 0.05
+        st.states["a"]["rho"] = 0.0
         st.update("a", avg_reward=0.0, num_steps=10)
-    # rho_max must still allow sampling near 0
+    # rho_max must still allow sampling at g=0 next visit.
     assert st.states["a"]["rho_max"] == 0.5
-    # When sampling now, U(0, 0.5) can still yield rho near 0
-    with mock.patch.object(_mod.random, "uniform", return_value=0.02):
+    # Force the sampler to pick g=0 (the on-target rho); v2 must still allow
+    # this visit to land at rho=0.0 — no rho_min-style lockout.
+    with mock.patch.object(_mod.random, "randint", return_value=0):
         rho = st.get_rho("a", num_steps=10)
-    assert rho == 0.02
+    assert rho == 0.0
 
 
 def test_v2_snap_to_zero_when_below_one_step_threshold():

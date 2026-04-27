@@ -731,12 +731,23 @@ class MonotoneFrontierCurriculumStateV2:
     ``rho_min`` state):
 
     * **State** — one scalar per sample, ``rho_max_i ∈ [0, 1]``.  Initial 1.0.
-    * **Visit** — single ``rho`` for all ``n`` rollouts (GRPO group
-      identity preserved):
+
+    * **Visit** — single ``rho`` for all ``n`` rollouts (GRPO group identity
+      preserved).  Sampling is **discrete on the per-sample step lattice**
+      ``{k / num_steps_i : k ∈ {0, 1, ..., g_curr}}`` where
+      ``g_curr = round(rho_max_i * num_steps_i)``:
 
       .. code-block:: text
 
-          rho ~ Uniform(0, rho_max_i)
+          g_used  ~ Uniform{0, 1, ..., g_curr}    # inclusive on both ends
+          rho_used = g_used / num_steps_i
+
+      Inclusion of both ``g = 0`` (the on-target / no-shift training point)
+      and ``g = g_curr`` (the implicit "exploit at frontier" point) is
+      important: a continuous ``Uniform(0, rho_max)`` would give half-width
+      probability mass to both endpoints under
+      :meth:`compute_guidance_steps`'s nearest-integer rounding, which
+      under-samples exactly the two points the algorithm cares about most.
 
     * **Update** — one rule, no asymmetric "failure → tighten lower bound":
 
@@ -744,18 +755,25 @@ class MonotoneFrontierCurriculumStateV2:
 
           if avg_reward >= tau:
               rho_max_i ← min(rho_max_i, rho_used)
-          # else: do nothing (probe failure is non-informative)
+          # else: do nothing (failure is non-informative for ρ-solvability)
 
-    * **Discrete snap** — when ``rho_max < 1 / (2 * num_steps)`` (the
-      lattice point at which ``round(rho * num_steps)`` already returns 0),
-      snap ``rho_max`` to exactly 0.  Makes the convergence metric
-      ``frac_at_zero`` unambiguous.
+    * **Discrete snap (defensive)** — with discrete sampling above,
+      ``rho_used`` is always exactly on the lattice, so a ratchet from
+      ``g = 0`` succeeds naturally to ``rho_max = 0``.  The snap rule is
+      kept as a defence against externally-mutated state (loaded from old
+      checkpoints, or set in tests): when
+      ``rho_max < 1 / (2 * num_steps)``, snap to exactly 0.
 
     Compared to v1, v2 has:
 
     * 1 hyperparameter (``tau``) instead of 3 (``p_probe``, ``safety_K``,
       ``delta_safe``).
-    * No exploit / probe binary.  Uniform sampling subsumes both.
+    * No exploit / probe binary.  Discrete-uniform sampling subsumes both:
+      ``g = g_curr`` plays the implicit-exploit role, ``g < g_curr`` plays
+      the implicit-probe role, and the relative weight is automatically
+      ``1 / (g_curr + 1)`` per level — frontier-pushing intensifies as the
+      frontier descends (at ``g_curr = 1`` the split is 50/50 between
+      exploit and the only remaining probe at ``g = 0``).
     * No safety valve, no limit-cycle oscillation.
     * Strictly monotone non-increasing ``rho_max`` (no upward bumps).
 
@@ -811,22 +829,39 @@ class MonotoneFrontierCurriculumStateV2:
     # ------------------------------------------------------------------
 
     def get_rho(self, sample_id: str, num_steps: int) -> float:
-        """Sample ``rho ~ Uniform(0, rho_max_i)`` for this visit."""
+        """Sample ``g_used ~ Uniform{0, ..., g_curr}`` (discrete, both
+        endpoints inclusive) and return ``rho_used = g_used / num_steps``.
+
+        ``g_curr = _g_from_rho(rho_max, num_steps)`` is the discrete step
+        count corresponding to the current frontier.  Using a discrete
+        distribution on the per-sample step lattice eliminates the
+        boundary bias that a continuous ``Uniform(0, rho_max)`` would
+        introduce under nearest-integer rounding (where ``g = 0`` and
+        ``g = g_curr`` would each get a half-width region).
+        """
         if sample_id not in self.states:
             self.states[sample_id] = self._init_entry(num_steps)
 
         s = self.states[sample_id]
         s["num_steps"] = int(max(0, num_steps))
-        rho_max = s["rho_max"]
 
-        if rho_max <= 0.0:
-            rho = 0.0
-        else:
-            rho = random.uniform(0.0, rho_max)
+        # Degenerate cases collapse to rho = 0 deterministically.
+        if num_steps <= 0 or s["rho_max"] <= 0.0:
+            s["rho"] = 0.0
+            return 0.0
 
-        rho = max(0.0, min(1.0, rho))
-        s["rho"] = rho
-        return rho
+        g_curr = self._g_from_rho(s["rho_max"], num_steps)
+
+        # Discrete uniform on {0, 1, ..., g_curr}.  When g_curr == 0 this
+        # collapses to the constant 0 (no descent room left).
+        g_used = random.randint(0, g_curr)
+        rho_used = g_used / num_steps
+
+        # Clip defensively (rho_used is on-lattice and in [0, 1) by
+        # construction, but we keep the bound for symmetry with v1).
+        rho_used = max(0.0, min(1.0, rho_used))
+        s["rho"] = rho_used
+        return rho_used
 
     def update(self, sample_id: str, avg_reward: float, num_steps: int) -> None:
         """Monotone non-increasing update.  Failures are non-informative."""
@@ -844,9 +879,12 @@ class MonotoneFrontierCurriculumStateV2:
         if success and rho_used < s["rho_max"]:
             s["rho_max"] = rho_used
 
-        # Discrete snap: once rho_max drops below the "no teacher step"
-        # threshold, set it to exactly 0 so frac_at_zero is unambiguous and
-        # all future visits sample rho == 0 (full no-shift training).
+        # Defensive snap.  With discrete-lattice sampling in :meth:`get_rho`,
+        # ``rho_used`` is always on-lattice, so a successful visit at
+        # ``g = 0`` already yields ``rho_max = 0`` directly.  This branch
+        # only fires for state mutated externally (loaded from a v1
+        # checkpoint by mistake, or set by hand in tests / debugging) where
+        # rho_max could fall below the lattice's lowest non-zero point.
         snap = self._snap_threshold(num_steps)
         if 0.0 < s["rho_max"] < snap:
             s["rho_max"] = 0.0
