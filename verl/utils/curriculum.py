@@ -258,6 +258,17 @@ class PerSampleCurriculumState:
             "adaptive/frac_rho_max_below_0_1": frac_rho_max_below_0_1,
             "adaptive/mean_visits": sum(visits) / n,
             "adaptive/num_tracked": n,
+            # Cross-method unified panel (curriculum/*) — paper-grade overlay
+            # against MFC v1 / v2.  AdaBack's "frontier" is its rho_max:
+            # the upper bound of the active interval, which is monotone
+            # non-increasing on success (and never moved by failure).
+            **_unified_curriculum_metrics(
+                method="adaptive",
+                frontier_values=rho_maxs,
+                rhos_used=rhos,
+                visits=visits,
+                num_steps_list=None,  # AdaBack does not track per-sample num_steps in state
+            ),
         }
 
 
@@ -617,4 +628,316 @@ class MonotoneFrontierCurriculumState:
             "mfc/safety_trigger_total": sum(safety_triggers),
             "mfc/mean_safety_counter": sum(safety_counters) / n,
             "mfc/epsilon": self.epsilon,
+            "mfc/variant_v1_active": 1.0,
+            **_unified_curriculum_metrics(
+                method="mfc_v1",
+                frontier_values=rho_stars,
+                rhos_used=rhos_used,
+                visits=visits,
+                num_steps_list=num_steps_list,
+            ),
+        }
+
+
+# ======================================================================
+# Cross-method unified metrics (curriculum/* prefix)
+# ======================================================================
+
+def _unified_curriculum_metrics(
+    method: str,
+    frontier_values: list,
+    rhos_used: list,
+    visits: list,
+    num_steps_list: Optional[list] = None,
+) -> dict:
+    """Cross-method comparable metrics under ``curriculum/*`` prefix.
+
+    Use these keys (in addition to the method-specific ``adaptive/*`` /
+    ``mfc/*`` keys) when overlaying AdaBack vs MFC v1 vs MFC v2 on the
+    same wandb panel.  Each method's ``frontier_values`` is its own
+    "best-known descended-to point":
+
+    =====================  =============================================
+    Method                 ``frontier_values``
+    =====================  =============================================
+    AdaBack                ``rho_max`` (only descends on success)
+    MFC v1                 ``rho_star`` (probe-success descent + safety bumps)
+    MFC v2                 ``rho_max`` (strictly monotone non-increasing)
+    =====================  =============================================
+
+    All three are conceptually "the lowest rho the algorithm has
+    committed to as solvable for this sample so far".
+    """
+    n = len(frontier_values)
+    if n == 0:
+        return {"curriculum/method": method, "curriculum/num_tracked": 0}
+
+    sorted_f = sorted(frontier_values)
+    median = sorted_f[n // 2]
+
+    # The discrete-aware "effective zero" measures whether the sample is
+    # actually being trained on no-guidance prompts (round(rho * num_steps) == 0).
+    # When num_steps_list is unavailable we degrade to the continuous threshold.
+    if num_steps_list is not None and len(num_steps_list) == n:
+        frac_effective_zero = (
+            sum(
+                1
+                for v, ns in zip(frontier_values, num_steps_list)
+                if (
+                    ns <= 0
+                    or int(math.floor(v * ns + 0.5 + 1e-9)) == 0
+                )
+            )
+            / n
+        )
+    else:
+        frac_effective_zero = sum(1 for v in frontier_values if v < 0.05) / n
+
+    return {
+        "curriculum/method": method,
+        "curriculum/num_tracked": n,
+        "curriculum/mean_frontier": sum(frontier_values) / n,
+        "curriculum/median_frontier": median,
+        "curriculum/min_frontier": sorted_f[0],
+        "curriculum/max_frontier": sorted_f[-1],
+        "curriculum/frac_at_zero_strict": sum(
+            1 for v in frontier_values if v <= 0.0
+        )
+        / n,
+        "curriculum/frac_at_zero_loose": sum(
+            1 for v in frontier_values if v < 0.05
+        )
+        / n,
+        "curriculum/frac_below_0_1": sum(
+            1 for v in frontier_values if v < 0.1
+        )
+        / n,
+        "curriculum/frac_effective_zero": frac_effective_zero,
+        "curriculum/mean_rho_used": sum(rhos_used) / n,
+        "curriculum/mean_visits": sum(visits) / n,
+    }
+
+
+# ======================================================================
+# Monotone Frontier Curriculum v2 — minimal monotone variant
+# ======================================================================
+
+class MonotoneFrontierCurriculumStateV2:
+    """
+    MFC v2: a structurally minimal monotone backward curriculum.
+
+    Designed by stripping :class:`MonotoneFrontierCurriculumState` (v1) down
+    to its first principles (and equivalently, by deleting AdaBack's
+    ``rho_min`` state):
+
+    * **State** — one scalar per sample, ``rho_max_i ∈ [0, 1]``.  Initial 1.0.
+    * **Visit** — single ``rho`` for all ``n`` rollouts (GRPO group
+      identity preserved):
+
+      .. code-block:: text
+
+          rho ~ Uniform(0, rho_max_i)
+
+    * **Update** — one rule, no asymmetric "failure → tighten lower bound":
+
+      .. code-block:: text
+
+          if avg_reward >= tau:
+              rho_max_i ← min(rho_max_i, rho_used)
+          # else: do nothing (probe failure is non-informative)
+
+    * **Discrete snap** — when ``rho_max < 1 / (2 * num_steps)`` (the
+      lattice point at which ``round(rho * num_steps)`` already returns 0),
+      snap ``rho_max`` to exactly 0.  Makes the convergence metric
+      ``frac_at_zero`` unambiguous.
+
+    Compared to v1, v2 has:
+
+    * 1 hyperparameter (``tau``) instead of 3 (``p_probe``, ``safety_K``,
+      ``delta_safe``).
+    * No exploit / probe binary.  Uniform sampling subsumes both.
+    * No safety valve, no limit-cycle oscillation.
+    * Strictly monotone non-increasing ``rho_max`` (no upward bumps).
+
+    Compared to AdaBack, v2 has the same single-knob simplicity but **no
+    ``rho_min``** — failure never locks out a low-rho region from future
+    exploration.
+
+    The success threshold ``tau`` is a real hyperparameter (default 0.5,
+    "majority of rollouts succeed").  This is much more noise-robust than
+    v1's derived ``epsilon = 1/n`` (which forces the ratchet to fire on a
+    single lucky rollout).
+    """
+
+    def __init__(self, tau: float = 0.5, default_rho_max: float = 1.0):
+        self.tau = float(tau)
+        self.default_rho_max = float(min(1.0, max(0.0, default_rho_max)))
+        # sample_id -> {"rho_max": float, "rho": float, "last_success": bool,
+        #               "visits": int, "num_steps": int}
+        self.states: dict[str, dict] = {}
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _g_from_rho(cls, rho: float, num_steps: int) -> int:
+        """Same discretisation as MFC v1 / AdaBack; replicated to keep v2
+        decoupled and runnable without touching v1 internals."""
+        if num_steps <= 0:
+            return 0
+        g = int(math.floor(rho * num_steps + 0.5 + 1e-9))
+        return max(0, min(num_steps - 1, g))
+
+    def _init_entry(self, num_steps: int) -> dict:
+        return {
+            "rho_max": self.default_rho_max,
+            "rho": self.default_rho_max,
+            "last_success": False,
+            "visits": 0,
+            "num_steps": int(max(0, num_steps)),
+        }
+
+    @staticmethod
+    def _snap_threshold(num_steps: int) -> float:
+        """When rho_max falls below this, snap to 0 (no teacher step would
+        be revealed under :meth:`compute_guidance_steps`)."""
+        if num_steps <= 0:
+            return 0.0
+        return 1.0 / (2.0 * num_steps)
+
+    # ------------------------------------------------------------------
+    # Core API (matches PerSampleCurriculumState / v1 for polymorphic use)
+    # ------------------------------------------------------------------
+
+    def get_rho(self, sample_id: str, num_steps: int) -> float:
+        """Sample ``rho ~ Uniform(0, rho_max_i)`` for this visit."""
+        if sample_id not in self.states:
+            self.states[sample_id] = self._init_entry(num_steps)
+
+        s = self.states[sample_id]
+        s["num_steps"] = int(max(0, num_steps))
+        rho_max = s["rho_max"]
+
+        if rho_max <= 0.0:
+            rho = 0.0
+        else:
+            rho = random.uniform(0.0, rho_max)
+
+        rho = max(0.0, min(1.0, rho))
+        s["rho"] = rho
+        return rho
+
+    def update(self, sample_id: str, avg_reward: float, num_steps: int) -> None:
+        """Monotone non-increasing update.  Failures are non-informative."""
+        if sample_id not in self.states:
+            return
+
+        s = self.states[sample_id]
+        s["num_steps"] = int(max(0, num_steps))
+        rho_used = s["rho"]
+        s["visits"] += 1
+
+        success = avg_reward >= self.tau
+        s["last_success"] = success
+
+        if success and rho_used < s["rho_max"]:
+            s["rho_max"] = rho_used
+
+        # Discrete snap: once rho_max drops below the "no teacher step"
+        # threshold, set it to exactly 0 so frac_at_zero is unambiguous and
+        # all future visits sample rho == 0 (full no-shift training).
+        snap = self._snap_threshold(num_steps)
+        if 0.0 < s["rho_max"] < snap:
+            s["rho_max"] = 0.0
+
+    # ------------------------------------------------------------------
+    # Step discretisation (shared with v1 / AdaBack)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def compute_guidance_steps(steps: list, rho: float) -> list:
+        return PerSampleCurriculumState.compute_guidance_steps(steps, rho)
+
+    # ------------------------------------------------------------------
+    # Checkpoint
+    # ------------------------------------------------------------------
+
+    def state_dict(self) -> dict:
+        return {
+            "method": "mfc",
+            "variant": "v2",
+            "tau": self.tau,
+            "default_rho_max": self.default_rho_max,
+            "states": dict(self.states),
+        }
+
+    def load_state_dict(self, d: dict) -> None:
+        variant = d.get("variant")
+        if variant not in (None, "v2"):
+            raise ValueError(
+                "MFC v2 state_dict expected variant 'v2' (or unset for first run); "
+                f"got variant={variant!r}.  Refusing to mix MFC variants in one run."
+            )
+        self.tau = float(d.get("tau", self.tau))
+        self.default_rho_max = float(
+            d.get("default_rho_max", self.default_rho_max)
+        )
+        self.states = d.get("states", {})
+        logger.info(
+            f"MonotoneFrontierCurriculumStateV2 restored: "
+            f"{len(self.states)} samples tracked"
+        )
+
+    # ------------------------------------------------------------------
+    # Metrics (mfc/* prefix for v2 + curriculum/* unified panel)
+    # ------------------------------------------------------------------
+
+    def get_metrics(self) -> dict:
+        if not self.states:
+            return {}
+
+        rhos_max = [s["rho_max"] for s in self.states.values()]
+        rhos_used = [s["rho"] for s in self.states.values()]
+        successes = [bool(s.get("last_success", False)) for s in self.states.values()]
+        visits = [s["visits"] for s in self.states.values()]
+        num_steps_list = [s.get("num_steps", 0) for s in self.states.values()]
+
+        n = len(rhos_max)
+        rhos_max_sorted = sorted(rhos_max)
+        median = rhos_max_sorted[n // 2]
+
+        # Discrete-aware effective zero (parallel to v1's metric of the same name).
+        g_stars = [self._g_from_rho(r, ns) for r, ns in zip(rhos_max, num_steps_list)]
+        frac_effective_zero = sum(1 for g in g_stars if g == 0) / n
+        frac_effective_below_2 = sum(1 for g in g_stars if g < 2) / n
+
+        return {
+            "mfc/variant_v2_active": 1.0,
+            # Frontier (rho_max) statistics
+            "mfc/mean_rho_max": sum(rhos_max) / n,
+            "mfc/median_rho_max": median,
+            "mfc/min_rho_max": min(rhos_max),
+            "mfc/max_rho_max": max(rhos_max),
+            # Convergence indicators (mirror v1's naming so dashboards align)
+            "mfc/frac_at_zero": sum(1 for v in rhos_max if v <= 0.0) / n,
+            "mfc/frac_rho_max_below_0_05": sum(1 for v in rhos_max if v < 0.05) / n,
+            "mfc/frac_rho_max_below_0_1": sum(1 for v in rhos_max if v < 0.1) / n,
+            "mfc/frac_effective_zero": frac_effective_zero,
+            "mfc/frac_effective_below_2_steps": frac_effective_below_2,
+            "mfc/frac_at_one": sum(1 for v in rhos_max if v > 0.999) / n,
+            # Visit statistics
+            "mfc/mean_rho_used": sum(rhos_used) / n,
+            "mfc/recent_success_rate": sum(successes) / n,
+            "mfc/mean_g_star": sum(g_stars) / n if g_stars else 0.0,
+            "mfc/mean_visits": sum(visits) / n,
+            "mfc/num_tracked": n,
+            "mfc/tau": self.tau,
+            **_unified_curriculum_metrics(
+                method="mfc_v2",
+                frontier_values=rhos_max,
+                rhos_used=rhos_used,
+                visits=visits,
+                num_steps_list=num_steps_list,
+            ),
         }

@@ -17,7 +17,8 @@ Extends RayPPOTrainer for:
   - standard GRPO          (curriculum_method=none)
   - static-mixture GRPO    (curriculum_method=mixture)
   - per-sample adaptive    (curriculum_method=adaptive, AdaBack-style)
-  - monotone frontier      (curriculum_method=mfc, Monotone Frontier Curriculum)
+  - monotone frontier v1   (curriculum_method=mfc, mfc_curriculum.variant=v1, default)
+  - monotone frontier v2   (curriculum_method=mfc, mfc_curriculum.variant=v2)
 """
 
 import json
@@ -40,6 +41,7 @@ from verl.utils.curriculum import (
     TrainingMetricsTracker,
     PerSampleCurriculumState,
     MonotoneFrontierCurriculumState,
+    MonotoneFrontierCurriculumStateV2,
 )
 from verl.utils.dataset.curriculum_dataset import CurriculumGRPODataset
 from verl.workers.reward_manager.cgrpo import CurriculumGRPORewardManager
@@ -107,7 +109,12 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         # ``mfc_state`` fields are kept for code paths that need the
         # concrete type.
         self.adaptive_state: Optional[PerSampleCurriculumState] = None
-        self.mfc_state: Optional[MonotoneFrontierCurriculumState] = None
+        self.mfc_state: Optional[
+            MonotoneFrontierCurriculumState | MonotoneFrontierCurriculumStateV2
+        ] = None
+        # Variant tag for downstream branches (trace records, checkpoint
+        # filenames).  Empty when curriculum is not MFC.
+        self.mfc_variant: str = ""
 
         if self.curriculum_method == "adaptive":
             ac = self.config.get("adaptive_curriculum", {})
@@ -123,19 +130,41 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             )
         elif self.curriculum_method == "mfc":
             mc = self.config.get("mfc_curriculum", {})
-            self.mfc_state = MonotoneFrontierCurriculumState(
-                p_probe=mc.get("p_probe", 0.25),
-                safety_K=mc.get("safety_K", 3),
-                delta_safe=mc.get("delta_safe", 0.1),
-                default_rho_star=mc.get("default_rho_star", 1.0),
-                n_rollouts=int(self.config.actor_rollout_ref.rollout.n),
-            )
-            logger.info(
-                f"MFC curriculum enabled: p_probe={self.mfc_state.p_probe}, "
-                f"safety_K={self.mfc_state.safety_K}, "
-                f"delta_safe={self.mfc_state.delta_safe}, "
-                f"epsilon={self.mfc_state.epsilon:.4f}"
-            )
+            # Default to "v1" so configs / launchers that predate the v2
+            # addition keep their original behaviour byte-identical.
+            variant = str(mc.get("variant", "v1")).lower()
+            if variant not in ("v1", "v2"):
+                logger.warning(
+                    "Unknown mfc_curriculum.variant=%r; falling back to 'v1'.",
+                    variant,
+                )
+                variant = "v1"
+            self.mfc_variant = variant
+
+            if variant == "v1":
+                self.mfc_state = MonotoneFrontierCurriculumState(
+                    p_probe=mc.get("p_probe", 0.25),
+                    safety_K=mc.get("safety_K", 3),
+                    delta_safe=mc.get("delta_safe", 0.1),
+                    default_rho_star=mc.get("default_rho_star", 1.0),
+                    n_rollouts=int(self.config.actor_rollout_ref.rollout.n),
+                )
+                logger.info(
+                    f"MFC v1 curriculum enabled: "
+                    f"p_probe={self.mfc_state.p_probe}, "
+                    f"safety_K={self.mfc_state.safety_K}, "
+                    f"delta_safe={self.mfc_state.delta_safe}, "
+                    f"epsilon={self.mfc_state.epsilon:.4f}"
+                )
+            else:  # v2
+                self.mfc_state = MonotoneFrontierCurriculumStateV2(
+                    tau=mc.get("tau", 0.5),
+                    default_rho_max=mc.get("default_rho_max", 1.0),
+                )
+                logger.info(
+                    f"MFC v2 curriculum enabled: tau={self.mfc_state.tau}, "
+                    f"default_rho_max={self.mfc_state.default_rho_max}"
+                )
 
         logger.info(
             f"CurriculumGRPOTrainer initialized: "
@@ -518,7 +547,9 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             logger.warning("_update_adaptive_state called without snapshot — skipping")
             return
 
-        is_mfc = self.mfc_state is not None
+        is_mfc_v1 = isinstance(self.mfc_state, MonotoneFrontierCurriculumState)
+        is_mfc_v2 = isinstance(self.mfc_state, MonotoneFrontierCurriculumStateV2)
+        is_mfc = is_mfc_v1 or is_mfc_v2
 
         for orig_idx in range(num_originals):
             start = orig_idx * n_rollouts
@@ -537,13 +568,19 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             s_pre = state.states[adaptive_id]
             rho_used = float(s_pre.get("rho", 0.0))
 
-            if is_mfc:
+            if is_mfc_v1:
                 pre_snapshot = {
                     "rho_star": float(s_pre["rho_star"]),
                     "mode": str(s_pre.get("mode", "exploit")),
                     "safety_counter": int(s_pre["safety_counter"]),
                     "safety_triggered_total": int(s_pre["safety_triggered_total"]),
                     "visits": int(s_pre["visits"]),
+                }
+            elif is_mfc_v2:
+                pre_snapshot = {
+                    "rho_max": float(s_pre["rho_max"]),
+                    "visits": int(s_pre["visits"]),
+                    "last_success": bool(s_pre.get("last_success", False)),
                 }
             else:
                 pre_snapshot = {
@@ -556,7 +593,8 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
             state.update(adaptive_id, avg_reward, num_steps)
             s_post = state.states[adaptive_id]
 
-            if is_mfc:
+            safety_triggered = False
+            if is_mfc_v1:
                 post_snapshot = {
                     "rho_star": float(s_post["rho_star"]),
                     "safety_counter": int(s_post["safety_counter"]),
@@ -568,13 +606,18 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     post_snapshot["safety_triggered_total"]
                     > pre_snapshot["safety_triggered_total"]
                 )
+            elif is_mfc_v2:
+                post_snapshot = {
+                    "rho_max": float(s_post["rho_max"]),
+                    "visits": int(s_post["visits"]),
+                    "last_success": bool(s_post.get("last_success", False)),
+                }
             else:
                 post_snapshot = {
                     "rho_min": float(s_post["rho_min"]),
                     "rho_max": float(s_post["rho_max"]),
                     "visits": int(s_post["visits"]),
                 }
-                safety_triggered = False
 
             rollout_rewards = []
             if reward_tensor is not None:
@@ -596,12 +639,18 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                     "state_before": pre_snapshot,
                     "state_after": post_snapshot,
                 }
-                if is_mfc:
+                if is_mfc_v1:
                     record["method"] = "mfc"
+                    record["variant"] = "v1"
                     record["mode"] = pre_snapshot["mode"]
                     record["epsilon"] = float(self.mfc_state.epsilon)
                     record["success"] = avg_reward >= float(self.mfc_state.epsilon)
                     record["safety_triggered"] = safety_triggered
+                elif is_mfc_v2:
+                    record["method"] = "mfc"
+                    record["variant"] = "v2"
+                    record["tau"] = float(self.mfc_state.tau)
+                    record["success"] = avg_reward >= float(self.mfc_state.tau)
                 else:
                     last_forced_zero = pre_snapshot.get("last_forced_zero", False)
                     record["method"] = "adaptive"
@@ -645,19 +694,21 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         accs = [r["avg_acc_rollouts"] for r in records]
         g_counts = [r["guidance_steps_count"] for r in records]
 
-        if self.mfc_state is not None:
-            rho_stars = [r["state_after"]["rho_star"] for r in records]
+        if isinstance(self.mfc_state, MonotoneFrontierCurriculumState):
+            # v1: rho_star + exploit/probe + safety
+            rho_frontiers = [r["state_after"]["rho_star"] for r in records]
             visits = [r["state_after"]["visits"] for r in records]
             n_success = sum(1 for r in records if r.get("success", False))
             n_probe = sum(1 for r in records if r.get("mode") == "probe")
             n_exploit = len(records) - n_probe
             n_safety = sum(1 for r in records if r.get("safety_triggered", False))
             frac_at_zero = (
-                sum(1 for rs in rho_stars if rs < 1e-9) / len(rho_stars)
-                if rho_stars
+                sum(1 for rs in rho_frontiers if rs < 1e-9) / len(rho_frontiers)
+                if rho_frontiers
                 else 0.0
             )
             summary = {
+                "variant": "v1",
                 "n_adaptive": len(records),
                 "n_frozen_skipped": num_originals_in_batch - len(records),
                 "n_exploit": n_exploit,
@@ -666,13 +717,13 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 "n_failure": len(records) - n_success,
                 "n_safety_triggered": n_safety,
                 "mean_rho_used": round(sum(rhos) / len(rhos), 4) if rhos else 0.0,
-                "mean_rho_star_after": round(
-                    sum(rho_stars) / len(rho_stars), 4
+                "mean_frontier_after": round(
+                    sum(rho_frontiers) / len(rho_frontiers), 4
                 )
-                if rho_stars
+                if rho_frontiers
                 else 0.0,
-                "min_rho_star_after": round(min(rho_stars), 4) if rho_stars else 0.0,
-                "max_rho_star_after": round(max(rho_stars), 4) if rho_stars else 0.0,
+                "min_frontier_after": round(min(rho_frontiers), 4) if rho_frontiers else 0.0,
+                "max_frontier_after": round(max(rho_frontiers), 4) if rho_frontiers else 0.0,
                 "frac_at_zero_after": round(frac_at_zero, 4),
                 "mean_acc": round(sum(accs) / len(accs), 4) if accs else 0.0,
                 "mean_guidance_steps": round(sum(g_counts) / len(g_counts), 2)
@@ -683,6 +734,41 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
                 else 0.0,
                 "max_visits": max(visits) if visits else 0,
                 "epsilon": float(self.mfc_state.epsilon),
+            }
+        elif isinstance(self.mfc_state, MonotoneFrontierCurriculumStateV2):
+            # v2: rho_max only, no mode / safety
+            rho_frontiers = [r["state_after"]["rho_max"] for r in records]
+            visits = [r["state_after"]["visits"] for r in records]
+            n_success = sum(1 for r in records if r.get("success", False))
+            frac_at_zero = (
+                sum(1 for rm in rho_frontiers if rm <= 0.0) / len(rho_frontiers)
+                if rho_frontiers
+                else 0.0
+            )
+            summary = {
+                "variant": "v2",
+                "n_adaptive": len(records),
+                "n_frozen_skipped": num_originals_in_batch - len(records),
+                "n_success": n_success,
+                "n_failure": len(records) - n_success,
+                "mean_rho_used": round(sum(rhos) / len(rhos), 4) if rhos else 0.0,
+                "mean_frontier_after": round(
+                    sum(rho_frontiers) / len(rho_frontiers), 4
+                )
+                if rho_frontiers
+                else 0.0,
+                "min_frontier_after": round(min(rho_frontiers), 4) if rho_frontiers else 0.0,
+                "max_frontier_after": round(max(rho_frontiers), 4) if rho_frontiers else 0.0,
+                "frac_at_zero_after": round(frac_at_zero, 4),
+                "mean_acc": round(sum(accs) / len(accs), 4) if accs else 0.0,
+                "mean_guidance_steps": round(sum(g_counts) / len(g_counts), 2)
+                if g_counts
+                else 0.0,
+                "mean_visits": round(sum(visits) / len(visits), 2)
+                if visits
+                else 0.0,
+                "max_visits": max(visits) if visits else 0,
+                "tau": float(self.mfc_state.tau),
             }
         else:
             visits = [r["state_after"]["visits"] for r in records]
@@ -754,7 +840,9 @@ class CurriculumGRPOTrainer(RayPPOTrainer):
         """Return the per-method JSON filename, or ``None`` if no state."""
         if self.adaptive_state is not None:
             return "adaptive_curriculum_state.json"
-        if self.mfc_state is not None:
+        if isinstance(self.mfc_state, MonotoneFrontierCurriculumStateV2):
+            return "mfc_curriculum_state_v2.json"
+        if isinstance(self.mfc_state, MonotoneFrontierCurriculumState):
             return "mfc_curriculum_state.json"
         return None
 

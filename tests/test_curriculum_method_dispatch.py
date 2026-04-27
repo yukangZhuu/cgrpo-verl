@@ -31,6 +31,7 @@ def _load_curriculum_module():
 _mod = _load_curriculum_module()
 PerSampleCurriculumState = _mod.PerSampleCurriculumState
 MonotoneFrontierCurriculumState = _mod.MonotoneFrontierCurriculumState
+MonotoneFrontierCurriculumStateV2 = _mod.MonotoneFrontierCurriculumStateV2
 
 
 def _load_yaml():
@@ -67,12 +68,23 @@ def test_yaml_has_mfc_curriculum_section():
     cfg = _load_yaml()
     assert "mfc_curriculum" in cfg
     mc = cfg["mfc_curriculum"]
+    # v1-only fields (preserved for backward compatibility with v1 launchers).
     for key in ("p_probe", "safety_K", "delta_safe", "default_rho_star"):
         assert key in mc, f"mfc_curriculum missing '{key}'"
     assert 0.0 <= mc["p_probe"] <= 1.0
     assert mc["safety_K"] >= 1
     assert 0.0 <= mc["delta_safe"] <= 1.0
     assert 0.0 <= mc["default_rho_star"] <= 1.0
+    # v2 additions: variant + tau + default_rho_max.
+    assert "variant" in mc and mc["variant"] in ("v1", "v2"), (
+        "mfc_curriculum.variant must be set to either 'v1' or 'v2'"
+    )
+    assert mc["variant"] == "v1", (
+        "Default mfc_curriculum.variant must be 'v1' to preserve backward "
+        "compatibility with existing launchers."
+    )
+    assert "tau" in mc and 0.0 < mc["tau"] <= 1.0
+    assert "default_rho_max" in mc and 0.0 <= mc["default_rho_max"] <= 1.0
 
 
 def test_dispatch_none_and_mixture_skip_curriculum_state():
@@ -106,7 +118,7 @@ def test_dispatch_adaptive_constructs_adaback_state():
     assert st2.states == st.states
 
 
-def test_dispatch_mfc_constructs_mfc_state():
+def test_dispatch_mfc_v1_constructs_mfc_v1_state():
     cfg = _load_yaml()
     mc = cfg["mfc_curriculum"]
     st = MonotoneFrontierCurriculumState(
@@ -125,21 +137,73 @@ def test_dispatch_mfc_constructs_mfc_state():
     assert st2.epsilon == st.epsilon
 
 
-def test_metrics_namespaces_are_disjoint():
-    """adaptive/* and mfc/* metric keys must never collide."""
+def test_dispatch_mfc_v2_constructs_mfc_v2_state():
+    cfg = _load_yaml()
+    mc = cfg["mfc_curriculum"]
+    st = MonotoneFrontierCurriculumStateV2(
+        tau=mc["tau"],
+        default_rho_max=mc["default_rho_max"],
+    )
+    st.get_rho("y", num_steps=8)
+    st.update("y", avg_reward=0.7, num_steps=8)
+    sd = st.state_dict()
+    assert sd.get("variant") == "v2"
+    st2 = MonotoneFrontierCurriculumStateV2()
+    st2.load_state_dict(sd)
+    assert st2.states == st.states
+    assert st2.tau == st.tau
+
+
+def test_dispatch_v1_v2_state_files_must_be_distinct():
+    """Trainer saves v1 to mfc_curriculum_state.json and v2 to
+    mfc_curriculum_state_v2.json. This catches a future regression
+    that would let v1 and v2 share a checkpoint filename."""
+    trainer_src = (
+        ROOT / "verl" / "trainer" / "cgrpo_trainer.py"
+    ).read_text(encoding="utf-8")
+    assert '"mfc_curriculum_state.json"' in trainer_src
+    assert '"mfc_curriculum_state_v2.json"' in trainer_src
+
+
+def test_method_private_metric_namespaces_are_disjoint():
+    """Method-private prefixes (``adaptive/*`` and ``mfc/*``) must never collide.
+
+    The shared ``curriculum/*`` prefix is *intentional* — it is the unified
+    cross-method comparison panel (see :func:`_unified_curriculum_metrics`
+    in ``verl/utils/curriculum.py``) used by paper-grade wandb overlays.
+    """
     ad = PerSampleCurriculumState()
     ad.get_rho("a", num_steps=8)
     ad.update("a", avg_reward=0.5, num_steps=8)
     am = ad.get_metrics()
 
-    mfc = MonotoneFrontierCurriculumState(n_rollouts=8)
-    mfc.get_rho("a", num_steps=8)
-    mfc.update("a", avg_reward=0.5, num_steps=8)
-    mm = mfc.get_metrics()
+    mfc1 = MonotoneFrontierCurriculumState(n_rollouts=8)
+    mfc1.get_rho("a", num_steps=8)
+    mfc1.update("a", avg_reward=0.5, num_steps=8)
+    mm1 = mfc1.get_metrics()
 
-    assert set(am.keys()).isdisjoint(set(mm.keys()))
-    assert all(k.startswith("adaptive/") for k in am.keys())
-    assert all(k.startswith("mfc/") for k in mm.keys())
+    mfc2 = MonotoneFrontierCurriculumStateV2()
+    mfc2.get_rho("a", num_steps=8)
+    mfc2.update("a", avg_reward=0.5, num_steps=8)
+    mm2 = mfc2.get_metrics()
+
+    def private(state_metrics):
+        return {k for k in state_metrics if not k.startswith("curriculum/")}
+
+    am_priv = private(am)
+    mm1_priv = private(mm1)
+    mm2_priv = private(mm2)
+
+    assert all(k.startswith("adaptive/") for k in am_priv)
+    assert all(k.startswith("mfc/") for k in mm1_priv)
+    assert all(k.startswith("mfc/") for k in mm2_priv)
+    assert am_priv.isdisjoint(mm1_priv)
+    assert am_priv.isdisjoint(mm2_priv)
+    # v1 and v2 deliberately share the ``mfc/*`` prefix for dashboard
+    # continuity; the unique distinguishing keys are
+    # ``mfc/variant_v1_active`` and ``mfc/variant_v2_active``.
+    assert "mfc/variant_v1_active" in mm1_priv
+    assert "mfc/variant_v2_active" in mm2_priv
 
 
 def test_state_dict_filenames_are_distinct():

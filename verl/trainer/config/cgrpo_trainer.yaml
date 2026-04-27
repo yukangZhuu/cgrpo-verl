@@ -140,7 +140,20 @@ adaptive_curriculum:
 # Monotone Frontier Curriculum (only used when curriculum_method=mfc)
 # See 第三轮实验/MFC_算法设计_spec.md for the full algorithm spec.
 mfc_curriculum:
+  # Algorithm variant:
+  #   "v1" (default) — full MFC: rho_star + exploit/probe split + safety valve
+  #                    (uses p_probe, safety_K, delta_safe, default_rho_star)
+  #   "v2"           — minimal monotone variant: rho_max + Uniform(0, rho_max)
+  #                    + monotone non-increasing update (uses tau, default_rho_max)
+  # Choosing v2 ignores all v1-only fields below (and vice versa).
+  variant: "v1"
+
+  # --- v1-only hyperparameters ---
   p_probe: 0.25           # per-visit probability of probing below the current frontier
   safety_K: 3             # consecutive exploit failures at rho_star before a safety regression
   delta_safe: 0.1         # regression step size applied when the safety valve fires
   default_rho_star: 1.0   # initial frontier (full guidance) for unseen samples
+
+  # --- v2-only hyperparameters ---
+  tau: 0.5                # success threshold for the v2 ratchet (avg_reward >= tau)
+  default_rho_max: 1.0    # initial frontier for v2 (full guidance) for unseen samples
