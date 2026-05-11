@@ -14,11 +14,11 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODELS_ROOT="$(dirname "$REPO_ROOT")/models"
 
-CKPT_RUN="${CKPT_RUN:-C3_math_mixture_hint}"
-GLOBAL_STEP="${GLOBAL_STEP:-1000}"
+CKPT_RUN="${CKPT_RUN:-ttn2k_unsolvable_adaptive_hint_n128_qwen3_0.6b_pro6000}"
+GLOBAL_STEP="${GLOBAL_STEP:-1200}"
 OUTPUT_NAME="${OUTPUT_NAME:-${CKPT_RUN}_global_step_${GLOBAL_STEP}}"
 
-LOCAL_DIR="${LOCAL_DIR:-${REPO_ROOT}/examples/cgrpo_trainer/checkpoints/${CKPT_RUN}/global_step_${GLOBAL_STEP}/actor}"
+LOCAL_DIR="${LOCAL_DIR:-${REPO_ROOT}/examples/cgrpo_trainer/scripts_in_use/0.6b/checkpoints/${CKPT_RUN}/global_step_${GLOBAL_STEP}/actor}"
 TARGET_DIR="${TARGET_DIR:-${MODELS_ROOT}/${OUTPUT_NAME}}"
 
 if [ ! -d "$LOCAL_DIR" ]; then
