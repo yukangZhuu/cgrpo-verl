@@ -56,7 +56,7 @@ python3 -m verl.trainer.main_cgrpo \
     data.guidance_mode=hint \
     data.curriculum_method=adaptive \
     \
-    adaptive_curriculum.tau=0.4 \
+    adaptive_curriculum.tau=0.5 \
     adaptive_curriculum.p_zero=0.1 \
     adaptive_curriculum.default_rho=0.5 \
     adaptive_curriculum.min_step_delta=1 \
