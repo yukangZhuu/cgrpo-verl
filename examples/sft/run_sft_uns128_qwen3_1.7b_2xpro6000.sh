@@ -67,7 +67,7 @@ torchrun --standalone --nnodes=1 --nproc_per_node=2 \
     data.train_files="$TRAIN_DATA" \
     data.val_files="$VAL_DATA" \
     data.train_batch_size=128 \
-    data.micro_batch_size_per_gpu=32 \
+    data.micro_batch_size_per_gpu=4 \
     data.max_length=2048 \
     data.truncation=error \
     data.balance_dp_token=False \
