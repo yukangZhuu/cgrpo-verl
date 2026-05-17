@@ -76,7 +76,7 @@ torchrun --standalone --nnodes=1 --nproc_per_node=2 \
     data.multiturn.enable=true \
     data.multiturn.messages_key=messages \
     data.multiturn.enable_thinking_key=enable_thinking \
-    data.ignore_input_ids_mismatch=True \
+    +data.ignore_input_ids_mismatch=True \
     \
     model.partial_pretrain="$MODEL_PATH" \
     model.fsdp_config.model_dtype=bf16 \
